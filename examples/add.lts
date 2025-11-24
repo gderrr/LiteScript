@@ -1,0 +1,13 @@
+import io
+
+sum
+	x = arg0
+	y = arg1
+	return x+y
+
+start
+	a = 0
+	b = 0
+	input a b
+	c = sum: a b
+	display c

@@ -1,0 +1,7 @@
+import input display
+
+start
+	input n
+	n = "Hello\_World\n"
+	display n
+	exit

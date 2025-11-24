@@ -1,0 +1,5 @@
+devnotes/
+*.o
+.vscode/
+.code-workspace
+lite

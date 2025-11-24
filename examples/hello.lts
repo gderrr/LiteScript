@@ -1,0 +1,4 @@
+import io
+
+start
+	display "Hello,_World!\n"

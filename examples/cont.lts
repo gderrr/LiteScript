@@ -1,0 +1,21 @@
+import io
+
+start
+	container c
+	n = 10
+	i = 0
+	loop i < n
+		c put i <- i
+		i += 1
+	i = 0
+	loop i < n
+		x = 0
+		c get i -> x
+		display x "_"
+		i += 1
+	display "\n"
+	val = 0
+	c top -> val
+	display "c_top:_" val "\n"
+	c end -> val
+	display "c_end:_" val "\n"

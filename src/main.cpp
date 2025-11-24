@@ -1,0 +1,533 @@
+#include "CustomFunctions.h"
+#include "Evaluator.h"
+
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <memory>
+#include <algorithm>
+#include <cctype>
+#include <vector>
+#include <cstdlib>
+#include <typeinfo>
+#include <stack>
+#include <map>
+#include <functional>
+#include <variant>
+#include <iterator>
+using namespace std;
+
+//////////////////////////////////////////////////////////////////
+// UTILS
+//////////////////////////////////////////////////////////////////
+
+struct TLine {
+    int indentLevel;
+    string code;
+};
+
+struct Key {
+    std::variant<int, float, string> value;
+    bool operator< (const Key& other) const {
+        return value < other.value;
+    }
+};
+
+struct TLoop {
+    int line;
+    int indentLevel;
+};
+
+bool isBlankLine (const string& line) {
+    return all_of(line.begin(), line.end(), [](char c) { return isspace(c); } );
+}
+
+bool isComment (const string& line) {
+    for (char c: line) {
+        if (isspace(static_cast<unsigned char>(c))) {
+            continue;
+        }
+        return c == '$';
+    }
+    return false;
+}
+
+vector<string> split (int& tabCount, const string& line) {
+    tabCount = 0;
+    int i = 0;
+    for (; i < line.size() && line[i] == '\t'; i++) tabCount++;
+
+    vector<string> words;
+    string current;
+    for (; i < line.size(); i++) {
+        char c = line[i];
+        if (isspace(c)) {
+            if (!current.empty()) {
+                words.push_back(current);
+                current.clear();
+            }
+        } else {
+            current += c;
+        }
+    }
+
+    if (!current.empty()) {
+        words.push_back(current);
+    }
+
+    return words;
+}
+
+vector<string> readClean (const string& filePath) {
+    ifstream file(filePath);
+
+    if (!file.is_open()) {
+        cerr << "Error: Could not open file " << filePath << endl;
+        exit(1);
+    }
+
+    vector<string> readFile;
+    string line;
+    while (getline(file, line)) {
+        // Removes lines with no relevant text (including comments)
+        if (!isBlankLine(line) && !isComment(line)) readFile.push_back(line);
+    }
+    file.close();
+
+    return readFile;
+}
+
+bool isAssigner (const string& second_token) {
+    return (second_token == "=" || second_token == "+=" || second_token == "-=");
+}
+
+bool isContainerOp (const string& second_token) {
+    return (second_token == "get" || second_token == "put" || second_token == "equ" 
+        || second_token == "del" || second_token == "top" || second_token == "end");
+}
+
+bool isFunctionCall (const string& third_token) {
+    int n = third_token.size();
+    return (third_token[n-1] == ':');
+}
+
+map<string,int> mapFunctions (const vector<TLine>& program) {
+    map<string,int> ret;
+    for (int i = 0; i < program.size(); i++) {
+        if (program[i].indentLevel == 0) ret[program[i].code] = i;
+    }
+    return ret;
+}
+
+int skipConditional (int line, const vector<TLine>& program) {
+    int condIndentation = program[line].indentLevel;
+    line++;
+    while (program[line].indentLevel > condIndentation) {
+        line++;
+    }
+    return line-1;
+}
+
+bool existsVariable (const map<string,any>& variables, const string& varName) {
+    const auto& it = variables.find(varName);
+    return it != variables.end();
+}
+
+bool contains (const vector<TLoop>& loopLines, int line) {
+    for (auto l : loopLines) {
+        if (l.line == line) return true;
+    }
+    return false;
+}
+
+///////////////////////////////////////////////////////////
+// PROCEDURES
+///////////////////////////////////////////////////////////
+
+vector<TLine> parse (int startln, vector<unique_ptr<Function>>& importedFunctions, const vector<string>& readFile) {
+    vector<TLine> parsedProgram;
+    int ln = startln;
+
+    for (int i = 0; i < readFile.size(); i++) {
+        int tabs = 0;
+        vector<string> tokens = split(tabs, readFile[i]);
+
+        //for (string t: tokens) cout << t << " ";
+        //cout << tokens.size() << endl;
+
+        if (tokens[0] == "import") {
+            for (int j = 1; j < tokens.size(); j++) {
+
+                // IMPORTED FUNCTIONS
+                if (tokens[j] == "io") importedFunctions.push_back(make_unique<IO>());
+
+                else {
+                    cerr << "Imported function is not a LiteScript standard library function: " << tokens[j] << endl;
+                    exit(1);
+                }
+            }
+        }
+        else if (tokens[0] == "require") {
+            for (int j = 1; j < tokens.size(); j++) {
+                int n = tokens[j].size();
+                if (tokens[j][n-4] != '.' || tokens[j][n-3] != 'l' || tokens[j][n-2] != 't' || tokens[j][n-1] != 's') {
+                    cerr << "Indicated file is not a LiteScript file. (.lts)" << endl;
+                    exit(1);
+                }
+
+                vector<string> readFile = readClean(tokens[j]);
+                vector<TLine> requiredProgram = parse(ln, importedFunctions, readFile);
+                for (int k = 0; k < requiredProgram.size(); k++) {
+                    parsedProgram.push_back(requiredProgram[k]);
+                    ln++;
+                }
+            }
+        }
+        else {
+            if (tokens[0] == "conditional" || tokens[0] == "loop") {
+                string conditional_expr;
+                for (int j = 1; j < tokens.size(); j++) {
+                    conditional_expr += tokens[j];
+                }
+                parsedProgram.push_back(TLine{tabs, tokens[0] + " " + conditional_expr});
+            }
+            else if (tokens.size() > 2 && isAssigner(tokens[1]) && !isFunctionCall(tokens[2])) {
+                string arithmetic_expr;
+                for (int j = 2; j < tokens.size(); j++) {
+                    arithmetic_expr += tokens[j];
+                }
+                parsedProgram.push_back(TLine{tabs, tokens[0] + " " + tokens[1] + " " + arithmetic_expr});
+            }
+            else {
+                string remerge = tokens[0];
+                for (int j = 1; j < tokens.size(); j++) {
+                    remerge += " " + tokens[j];
+                }
+                parsedProgram.push_back(TLine{tabs, remerge});
+            }
+
+            ln++;
+        }
+    }
+
+    return parsedProgram;
+}
+
+// NOTES:
+// Args are always passed by const reference.
+
+// PRE: Program with valid LTS syntax
+// POST: Expected LTS behavior (without bugs, hopefully...)
+any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>& program, const vector<unique_ptr<Function>>& importedFunctions, const vector<any>& args) {
+
+    // === BUILD PHASE ===
+
+    // We need to take into account these two DS when creating variables, we need to force
+    // the evaluator to not create empty variables.
+    stack<vector<string>> variableStack;
+    map<string,any> variables;
+
+    for (int i = 0; i < args.size(); i++) {
+        string argi = "arg" + to_string(i);
+        variables[argi] = args[i];
+    }
+
+    int prevIndentLevel = 0;
+    vector<TLoop> loopLines;
+
+    // === RUNTIME PHASE ===
+    //                         indentLevel 0 indicates eoFn             Handle eoFn with valid loops
+    for (int line = startLine; !((line >= program.size() && loopLines.empty()) || (program[line].indentLevel == 0 && loopLines.empty())) ; line++) {
+
+        // Handle reentering loop indendation or more
+        if (!loopLines.empty() && program[line].indentLevel <= loopLines.back().indentLevel) {
+            line = loopLines.back().line;
+        }
+
+        // Handle indentation decrement
+        if (program[line].indentLevel < prevIndentLevel) {
+            vector<string> currentScopeVars = variableStack.top();
+            for (string var: currentScopeVars) {
+                variables.erase(var);
+            }
+            variableStack.pop();
+        }
+        // Handle indentation increment
+        else if (program[line].indentLevel > prevIndentLevel) {
+            variableStack.push(vector<string>());
+        }
+        prevIndentLevel = program[line].indentLevel;
+        
+        //cout << program[line].code << endl;
+
+        int dummyTabs; // To be ignored
+        vector<string> instruction = split(dummyTabs, program[line].code);
+
+
+
+        // ASSIGNMENTS
+        if (instruction.size() >= 3 && isAssigner(instruction[1])) {
+            any value;
+            // Handle function call first then expressions
+            if (isFunctionCall(instruction[2])) {
+                string funcName = instruction[2];
+                funcName.pop_back();
+                vector<any> funcArgs;
+                for (int i = 3; i < instruction.size(); i++) funcArgs.push_back(evaluate(variables,instruction[i]));
+                value = interpret(funcs.at(funcName)+1, funcs, program, importedFunctions, funcArgs);
+            }
+            else {
+                value = evaluate(variables, instruction[2]);
+            }
+
+            // Assign (have to use casts)
+            if (instruction[1] == "=") {
+                // In this case, we are allowed to use [], creates if doesnt exist
+                if (!existsVariable(variables, instruction[0])) variableStack.top().push_back(instruction[0]);
+                variables[instruction[0]] = value;
+            }
+            else if (instruction[1] == "+=") {
+                if (variables.at(instruction[0]).type() == typeid(int) && value.type() == typeid(int)) {
+                    int a = any_cast<int>(variables.at(instruction[0]));
+                    int b = any_cast<int>(value);
+                    a += b;
+                    variables.at(instruction[0]) = a;
+                }
+                else if (variables.at(instruction[0]).type() == typeid(float) && value.type() == typeid(float)) {
+                    float a = any_cast<float>(variables.at(instruction[0]));
+                    float b = any_cast<float>(value);
+                    a += b;
+                    variables.at(instruction[0]) = a;
+                }
+                else {
+                    string a = any_cast<string>(variables.at(instruction[0]));
+                    string b = any_cast<string>(value);
+                    a = a + b;
+                    variables.at(instruction[0]) = a;
+                }
+            }
+            else {
+                if (variables.at(instruction[0]).type() == typeid(int) && value.type() == typeid(int)) {
+                    int a = any_cast<int>(variables.at(instruction[0]));
+                    int b = any_cast<int>(value);
+                    a -= b;
+                    variables.at(instruction[0]) = a;
+                }
+                else {
+                    float a = any_cast<float>(variables.at(instruction[0]));
+                    float b = any_cast<float>(value);
+                    a -= b;
+                    variables.at(instruction[0]) = a;
+                }
+            }
+        }
+
+
+
+        // CONTAINER (key can be expr) (all expr must be condensed)
+        else if (instruction[0] == "container") {
+            map<Key,any> cont;
+            if (!existsVariable(variables, instruction[1])) variableStack.top().push_back(instruction[1]);
+            variables[instruction[1]] = cont;
+        }
+        else if (instruction.size() >= 3 && isContainerOp(instruction[1])) {
+            if (instruction[1] == "get") {
+                // c get key -> var
+                any key = evaluate(variables, instruction[2]);
+                auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
+                if (key.type() == typeid(int)) variables.at(instruction[4]) = cont[Key{any_cast<int>(key)}];
+                else if (key.type() == typeid(float)) variables.at(instruction[4]) = cont[Key{any_cast<float>(key)}];
+                else variables.at(instruction[4]) = cont[Key{any_cast<string>(key)}];
+            }
+            else if (instruction[1] == "put") {
+                // c put key <- expr
+                any key = evaluate(variables, instruction[2]);
+                auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
+                if (key.type() == typeid(int)) cont[Key{any_cast<int>(key)}] = evaluate(variables, instruction[4]);
+                else if (key.type() == typeid(float)) cont[Key{any_cast<float>(key)}] = evaluate(variables, instruction[4]);
+                else cont[Key{any_cast<string>(key)}] = evaluate(variables, instruction[4]);
+            }
+            else if (instruction[1] == "equ") {
+                // c1 equ c2
+                variables.at(instruction[0]) = variables.at(instruction[2]);
+            }
+            else if (instruction[1] == "del") {
+                // c del key
+                any key = evaluate(variables, instruction[2]);
+                auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
+                if (key.type() == typeid(int)) cont.erase(Key{any_cast<int>(key)});
+                else if (key.type() == typeid(float)) cont.erase(Key{any_cast<float>(key)});
+                else cont.erase(Key{any_cast<string>(key)});
+            }
+            else if (instruction[1] == "top") {
+                // c top -> var
+                auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
+                auto it = cont.begin();
+                variables.at(instruction[3]) = it->second;
+            }
+            else {
+                // c end -> var
+                auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
+                auto it = cont.end();
+                it--;
+                any val = it->second;
+                variables.at(instruction[3]) = val;
+            }
+        }
+
+
+
+        // CONDITIONAL
+        else if (instruction[0] == "conditional") {
+            any cond = evaluate(variables, instruction[1]);
+            bool isFalse = false;
+            if (cond.type() == typeid(int)) isFalse = (any_cast<int>(cond) == 0);
+            else if (cond.type() == typeid(float)) isFalse = (any_cast<float>(cond) == 0.0f);
+            else isFalse = (any_cast<string>(cond).empty());
+
+            if (isFalse) line = skipConditional(line, program);
+        }
+
+
+
+        // LOOP
+        else if (instruction[0] == "loop") {
+            any cond = evaluate(variables, instruction[1]);
+            bool isFalse = false;
+            if (cond.type() == typeid(int)) isFalse = (any_cast<int>(cond) == 0);
+            else if (cond.type() == typeid(float)) isFalse = (any_cast<float>(cond) == 0.0f);
+            else isFalse = (any_cast<string>(cond).empty());
+
+            if (isFalse) {
+                line = skipConditional(line, program);
+                if (!loopLines.empty()) loopLines.pop_back();
+            }
+            else {
+                if (loopLines.empty()) loopLines.push_back(TLoop{line, program[line].indentLevel});
+                else if (!contains(loopLines,line)) loopLines.push_back(TLoop{line, program[line].indentLevel});
+            }
+        }
+
+
+
+        // RETURN
+        else if (instruction[0] == "return") {
+            any ret;
+            if (!existsVariable(variables, instruction[1])) ret = evaluate(variables, instruction[1]);
+            else ret = variables.at(instruction[1]);
+            return ret;
+        }
+
+
+
+        // FUNCTION CALL (void or ignored return value)
+        else if (isFunctionCall(instruction[0])) {
+            string funcName = instruction[0];
+            funcName.pop_back();
+            vector<any> funcArgs;
+            for (int i = 1; i < instruction.size(); i++) funcArgs.push_back(evaluate(variables,instruction[i]));
+            interpret(funcs.at(funcName)+1, funcs, program, importedFunctions, funcArgs);
+        }
+
+
+
+        // EXIT
+        else if (instruction[0] == "exit") {
+            if (instruction.size() == 1) exit(0);
+            else exit(stoi(instruction[1]));
+        }
+
+
+
+        // IMPORTED FUNCTIONS
+        else {
+            bool executed = false;
+            for (int i = 0; i < importedFunctions.size() && !executed; i++) {
+                vector<any> importArgs;
+                vector<any> exprArgs;
+                for (int j = 1; j < instruction.size(); j++) {
+                    if (!existsVariable(variables, instruction[j])) {
+                        // Here, it is treated as an expression, we have an auxiliary vector
+                        // to store references to these temporary values
+                        exprArgs.push_back(evaluate(variables, instruction[j]));
+                        if (exprArgs.back().type() == typeid(int)) {
+                            importArgs.push_back(ref(any_cast<int&>(exprArgs.back())));
+                        }
+                        else if (exprArgs.back().type() == typeid(float)) {
+                            importArgs.push_back(ref(any_cast<float&>(exprArgs.back())));
+                        }
+                        else {
+                            importArgs.push_back(ref(any_cast<string&>(exprArgs.back())));
+                        }
+                    }
+                    else if (variables.at(instruction[j]).type() == typeid(int)) {
+                        importArgs.push_back(ref(any_cast<int&>(variables.at(instruction[j]))));
+                    }
+                    else if (variables.at(instruction[j]).type() == typeid(float)) {
+                        importArgs.push_back(ref(any_cast<float&>(variables.at(instruction[j]))));
+                    }
+                    else {
+                        importArgs.push_back(ref(any_cast<string&>(variables.at(instruction[j]))));
+                    }
+                }
+                executed = importedFunctions[i]->execute(instruction[0], importArgs);
+            }
+
+            // Left instruction is either not imported or non-existent
+            if (!executed) {
+                cerr << "Unrecognized instruction: " << program[line].code << endl;
+                exit(1);
+            }
+        }
+    }
+
+    // === END OF FUNCTION ===
+
+    return any{}; // return nothing when eoFn
+}
+
+/////////////////////////////////////////////////////////
+// MAIN
+////////////////////////////////////////////////////////
+
+int main (int argc, char* argv[]) {
+
+    if (argc < 2) {
+        cerr << "Usage: " << argv[0] << " <filename/absolute path to file> <additional args...>" << endl;
+        cerr << "If filename given then it will search in the current working directory." << endl; 
+        return 1;
+    }
+
+    if (string(argv[1]) == "--version") {
+        cout << "lite 1.0.0 2025-11-24" << endl;
+        return 0;
+    }
+
+    string filePath = argv[1];
+    int n = filePath.size();
+    if (filePath[n-4] != '.' || filePath[n-3] != 'l' || filePath[n-2] != 't' || filePath[n-1] != 's') {
+        cerr << "Indicated file is not a LiteScript file. (.lts)" << endl;
+        return 1;
+    }
+
+    vector<string> readFile = readClean(filePath);
+
+    //for (string r: readFile) cout << r << endl;
+
+    vector<unique_ptr<Function>> importedFunctions;
+    vector<TLine> program = parse(0, importedFunctions, readFile);
+
+    /*
+    cout << "L I code" << endl;
+    cout << "--------" << endl; 
+    for (int i = 0; i < program.size(); i++) {
+        cout << i << " " << program[i].indentLevel << " " << program[i].code << endl;
+    }
+    */
+
+    map<string,int> funcs = mapFunctions(program);
+    int startLine = funcs.at("start");
+    vector<any> programArgs;
+    for (int i = 2; i < argc; i++) programArgs.push_back(string(argv[i]));
+    interpret(startLine+1, funcs, program, importedFunctions, programArgs);
+}
