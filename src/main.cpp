@@ -499,7 +499,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 1.0.0 2025-11-24" << endl;
+        cout << "lite 0.0.1 2025-11-25" << endl;
         return 0;
     }
 

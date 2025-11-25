@@ -6,6 +6,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
+#include <cmath>
 
 ////////////////////////////////////////////
 // UTILS
@@ -19,13 +20,15 @@ struct Token {
 };
 
 bool isOperatorChar (char c) {
-    return string("+-*/%^&|!<>=()").find(c) != string::npos;
+    return string("+-*/%^&|!<>=()~").find(c) != string::npos;
 }
 
 bool isDigitOrDot (char c) {
     return isdigit(c) || c == 'c';
 }
 
+// ** is exponentiation
+// ~ is logarithm (base 2)
 int precedence (const string& op) {
     if (op == "||") return 1;
     if (op == "&&") return 2;
@@ -37,8 +40,13 @@ int precedence (const string& op) {
     if (op == "<<" || op == ">>") return 8;
     if (op == "+" || op == "-") return 9;
     if (op == "*" || op == "/" || op == "%") return 10;
-    if (op == "!" || op == "u-") return 11;
+    if (op == "**") return 11;
+    if (op == "!" || op == "u-" || op == "~") return 12;
     return 0;
+}
+
+bool isRightAssociative (const string& op) {
+    return (op == "u-" || op == "!" || op == "~" || op == "**");
 }
 
 void DEBUG_PRINT_TOKEN (const Token& tok) {
@@ -146,7 +154,7 @@ vector<Token> tokenize (const string& expr) {
                 string two = op + expr[i+1];
                 // multi-char ops
                 if (two == "==" || two == "!=" || two == "<=" || two == ">=" ||
-                    two == "<<" || two == ">>" || two == "&&" || two == "||") {
+                    two == "<<" || two == ">>" || two == "&&" || two == "||" || two == "**") {
                     op = two;
                     i++;
                 }
@@ -186,7 +194,8 @@ vector<Token> toPostfix (const vector<Token>& tokens) {
 
             // Precedence handling
             while (!ops.empty() && ops.top().type == TokenType::Operator &&
-                    precedence(ops.top().value) >= precedence(op)) {
+                    ((precedence(ops.top().value) > precedence(op)) ||
+                    (precedence(ops.top().value) == precedence(op) && !isRightAssociative(op)))) {
                 output.push_back(ops.top());
                 ops.pop();
             }
@@ -252,6 +261,15 @@ any evalPostfix (const vector<Token>& postfix, const map<string, any>& vars) {
                 st.push(val == 0 ? 1 : 0);
                 continue;
             }
+            if (op == "~") {
+                any a = st.top(); st.pop();
+
+                float val;
+                if (a.type() == typeid(int)) val = static_cast<float>(any_cast<int>(a));
+                else val = any_cast<float>(a);
+                st.push(log2(val));
+                continue;
+            }
 
             // Binary operators
             any b = st.top(); st.pop();
@@ -294,6 +312,7 @@ any evalPostfix (const vector<Token>& postfix, const map<string, any>& vars) {
                 else if (op == "-") st.push(fa - fb);
                 else if (op == "*") st.push(fa * fb);
                 else if (op == "/") st.push(fa / fb);
+                else if (op == "**") st.push(pow(fa, fb));
                 else if (op == "==") st.push(fa == fb ? 1 : 0);
                 else if (op == "!=") st.push(fa != fb ? 1 : 0);
                 else if (op == "<") st.push(fa < fb ? 1 : 0);
