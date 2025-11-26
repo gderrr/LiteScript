@@ -1,0 +1,25 @@
+{
+    "name": "litescript",
+    "displayName": "LiteScript VSCode Extension",
+    "description": "Syntax highlighting and formatting for LiteScript",
+    "version": "0.1.0",
+    "publisher": "gderrr",
+    "engines": {
+        "vscode": "^1.70.0"
+    },
+    "categories": ["Programming Languages"],
+    "main": "./extension.js",
+    "activationEvents": [
+        "onLanguage:liteScript"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "liteScript",
+                "aliases": ["LiteScript", "LTS", "lts"],
+                "extensions": [".lts"],
+                "configuration": "./language-configuration.json"
+            }
+        ]
+    }
+}
