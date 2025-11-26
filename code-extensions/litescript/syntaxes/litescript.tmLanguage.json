@@ -1,0 +1,13 @@
+{
+    "scopeName": "source.litescript",
+    "patterns": [
+        {
+            "name": "keyword.control.litescript",
+            "match": "\\b(conditional|loop|return|exit|start)\\b"
+        },
+        {
+            "name": "keyword.import.litescript",
+            "match": "\\b(import|require)\\b"
+        }
+    ]
+}

@@ -2,7 +2,7 @@
     "name": "litescript",
     "displayName": "LiteScript VSCode Extension",
     "description": "Syntax highlighting and formatting for LiteScript",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "publisher": "gderrr",
     "engines": {
         "vscode": "^1.70.0"
@@ -10,15 +10,28 @@
     "categories": ["Programming Languages"],
     "main": "./extension.js",
     "activationEvents": [
-        "onLanguage:liteScript"
+        "onLanguage:litescript"
     ],
     "contributes": {
         "languages": [
             {
-                "id": "liteScript",
+                "id": "litescript",
                 "aliases": ["LiteScript", "LTS", "lts"],
                 "extensions": [".lts"],
                 "configuration": "./language-configuration.json"
+            }
+        ],
+        "configurationDefaults": {
+            "[litescript]": {
+                "editor.insertSpaces": false,
+                "editor.tabSize": 4
+            }
+        },
+        "grammars": [
+            {
+                "language": "litescript",
+                "scopeName": "source.litescript",
+                "path": "./syntaxes/litescript.tmLanguage.json"
             }
         ]
     }
