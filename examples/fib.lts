@@ -13,7 +13,7 @@ fib
 start
 	n = 0
 	loop 1
-		display "n:_"
-		input n
+		display; "n:_"
+		input; n
 		n = fib: n
-		display "fib\_n:_" n "\n"
+		display; "fib\_n:_" n "\n"

@@ -27,7 +27,7 @@ struct TLine {
 };
 
 struct Key {
-    std::variant<int, float, string> value;
+    variant<int, float, string> value;
     bool operator< (const Key& other) const {
         return value < other.value;
     }
@@ -103,7 +103,8 @@ bool isAssigner (const string& second_token) {
 
 bool isContainerOp (const string& second_token) {
     return (second_token == "get" || second_token == "put" || second_token == "equ" 
-        || second_token == "del" || second_token == "top" || second_token == "end");
+        || second_token == "del" || second_token == "top" || second_token == "end"
+        || second_token == "psh" || second_token == "pop" || second_token == "deq");
 }
 
 bool isFunctionCall (const string& third_token) {
@@ -330,7 +331,7 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
             if (!existsVariable(variables, instruction[1])) variableStack.top().push_back(instruction[1]);
             variables[instruction[1]] = cont;
         }
-        else if (instruction.size() >= 3 && isContainerOp(instruction[1])) {
+        else if (instruction.size() >= 2 && isContainerOp(instruction[1])) {
             if (instruction[1] == "get") {
                 // c get key -> var
                 any key = evaluate(variables, instruction[2]);
@@ -365,13 +366,44 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
                 auto it = cont.begin();
                 variables.at(instruction[3]) = it->second;
             }
-            else {
+            else if (instruction[1] == "end") {
                 // c end -> var
                 auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
                 auto it = cont.end();
                 it--;
                 any val = it->second;
                 variables.at(instruction[3]) = val;
+            }
+            else if (instruction[1] == "psh") {
+                // c psh <- expr
+                auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
+                if (cont.empty()) {
+                    cont[Key{int(0)}] = evaluate(variables, instruction[3]);
+                }
+                else {
+                    auto it = cont.end();
+                    it--;
+                    variant<int, float, string> key = it->first.value;
+                    if (key.index() != 0) {
+                        cerr << "'psh' operator cannot be applied to a non-numerical indexed container." << endl;
+                        exit(1);
+                    }
+                    int newKey = get<int>(key)+1;
+                    cont[Key{any_cast<int>(newKey)}] = evaluate(variables, instruction[3]);
+                }
+            }
+            else if (instruction[1] == "pop") {
+                // c pop
+                auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
+                auto it = cont.end();
+                it--;
+                cont.erase(it);
+            }
+            else {
+                // c deq
+                auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
+                auto it = cont.begin();
+                cont.erase(it);
             }
         }
 
@@ -499,7 +531,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 0.0.1 2025-11-25" << endl;
+        cout << "lite 0.0.2 2025-11-27" << endl;
         return 0;
     }
 
@@ -524,7 +556,7 @@ int main (int argc, char* argv[]) {
         cout << i << " " << program[i].indentLevel << " " << program[i].code << endl;
     }
     */
-
+    
     map<string,int> funcs = mapFunctions(program);
     int startLine = funcs.at("start");
     vector<any> programArgs;

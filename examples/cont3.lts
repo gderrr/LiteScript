@@ -1,0 +1,20 @@
+import io
+
+start
+	container c
+	c psh <- 1
+	c psh <- 2
+	c psh <- 3
+	val1 = 0
+	val2 = 0
+	c top -> val1
+	c end -> val2
+	display; "front:_" val1 "_back:_" val2 "\n"
+	c deq
+	c top -> val1
+	c end -> val2
+	display; "front:_" val1 "_back:_" val2 "\n"
+	c pop
+	c top -> val1
+	c end -> val2
+	display; "front:_" val1 "_back:_" val2 "\n"

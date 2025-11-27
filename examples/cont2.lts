@@ -1,0 +1,20 @@
+import io
+
+start
+	container c
+	val = 0
+	c psh <- 1
+	c end -> val
+	$ Should print 1
+	display; val "\n"
+	c psh <- 2
+	c end -> val
+	$ Should print 2
+	display; val "\n"
+	c pop
+	c end -> val
+	$ Should print 1
+	display; val "\n"
+	c pop
+	$ Should fail here
+	c end -> val

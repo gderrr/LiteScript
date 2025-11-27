@@ -11,11 +11,11 @@ start
 	loop i < n
 		x = 0
 		c get i -> x
-		display x "_"
+		display; x "_"
 		i += 1
-	display "\n"
+	display; "\n"
 	val = 0
 	c top -> val
-	display "c_top:_" val "\n"
+	display; "c_top:_" val "\n"
 	c end -> val
-	display "c_end:_" val "\n"
+	display; "c_end:_" val "\n"

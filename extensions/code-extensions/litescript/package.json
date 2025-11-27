@@ -2,7 +2,7 @@
     "name": "litescript",
     "displayName": "LiteScript VSCode Extension",
     "description": "Syntax highlighting and formatting for LiteScript",
-    "version": "0.1.2",
+    "version": "0.1.4",
     "publisher": "gderrr",
     "engines": {
         "vscode": "^1.70.0"
@@ -24,7 +24,9 @@
         "configurationDefaults": {
             "[litescript]": {
                 "editor.insertSpaces": false,
-                "editor.tabSize": 4
+                "editor.tabSize": 4,
+                "editor.suggestOnTriggerCharacters": false,
+                "editor.wordBasedSuggestions": "off"
             }
         },
         "grammars": [

@@ -6,7 +6,7 @@
 
 bool IO::execute (const string& function, vector<any>& args) {
 
-    if (function == "display") {
+    if (function == "display;") {
 
         // === START DEFINITION ===
 
@@ -33,7 +33,7 @@ bool IO::execute (const string& function, vector<any>& args) {
 
         return true;
     }
-    else if (function == "input") {
+    else if (function == "input;") {
 
         // === START DEFINITION ===
 

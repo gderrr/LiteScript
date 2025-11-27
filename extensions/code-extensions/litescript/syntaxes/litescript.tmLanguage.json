@@ -3,11 +3,7 @@
     "patterns": [
         {
             "name": "keyword.control.litescript",
-            "match": "\\b(conditional|loop|return|exit|start)\\b"
-        },
-        {
-            "name": "keyword.import.litescript",
-            "match": "\\b(import|require)\\b"
+            "match": "\\b(conditional|loop|return|exit|start|import|require)\\b"
         },
         {
             "name": "comment.line.litescript",
@@ -25,6 +21,30 @@
             "name": "string.quoted.double.litescript",
             "begin": "\"",
             "end": "\""
+        },
+        {
+            "name": "storage.type.litescript",
+            "match": "\\b(container)\\b"
+        },
+        {
+            "name": "entity.name.function.container.litescript",
+            "match": "\\b(get|put|equ|del|top|end|psh|pop|deq)\\b"
+        },
+        {
+            "name": "entity.name.function.declaration.litescript",
+            "match": "^(?!\t).*$"
+        },
+        {
+            "name": "entity.name.function.invocation.litescript",
+            "match": "\\b\\w+:"
+        },
+        {
+            "name": "support.class.litescript",
+            "match": "\\b\\w+;"
+        },
+        {
+            "name": "variable.other.litescript",
+            "match": "\\b[A-Za-z_][\\w]*\\b"
         }
     ]
 }

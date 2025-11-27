@@ -2,4 +2,4 @@ import io
 
 start
 	$ Expected result: 2
-	display ~~(2.0**2.0**2.0)
+	display; ~~(2.0**2.0**2.0)

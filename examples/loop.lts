@@ -2,8 +2,8 @@ import io
 
 start
 	n = 0
-	input n
+	input; n
 	i = 0
 	loop i < n
-		display "Hello_World\n"
+		display; "Hello_World\n"
 		i += 1

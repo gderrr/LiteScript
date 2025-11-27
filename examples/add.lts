@@ -8,6 +8,6 @@ sum
 start
 	a = 0
 	b = 0
-	input a b
+	input; a b
 	c = sum: a b
-	display c
+	display; c
