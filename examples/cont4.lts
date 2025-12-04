@@ -1,0 +1,17 @@
+import io
+
+start
+	container c
+	c put "hello" <- 0.67
+	c put "nah" <- 420
+	c put "lmfao" <- "nice"
+	n = 3
+	i = 0
+	loop i < n
+		key = 0
+		val = 0
+		c igtk i -> key
+		c igtv i -> val
+		display; "{" key "," val "}_"
+		i += 1
+	display; "\n"

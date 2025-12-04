@@ -1,5 +1,6 @@
 #include "CustomFunctions.h"
 #include "Evaluator.h"
+#include "GlobalVariables.h"
 
 #include <iostream>
 #include <fstream>
@@ -104,7 +105,8 @@ bool isAssigner (const string& second_token) {
 bool isContainerOp (const string& second_token) {
     return (second_token == "get" || second_token == "put" || second_token == "equ" 
         || second_token == "del" || second_token == "top" || second_token == "end"
-        || second_token == "psh" || second_token == "pop" || second_token == "deq");
+        || second_token == "psh" || second_token == "pop" || second_token == "deq"
+        || second_token == "num" || second_token == "igtk" || second_token == "igtv");
 }
 
 bool isFunctionCall (const string& third_token) {
@@ -139,6 +141,19 @@ bool contains (const vector<TLoop>& loopLines, int line) {
         if (l.line == line) return true;
     }
     return false;
+}
+
+void updateVariable (const map<string, any>& src, map<string, any>& dst, const string& var) {
+    if (existsVariable(dst, var) && existsVariable(src, var)) {
+        dst[var] = src.at(var);
+    }
+}
+
+void updateVariables (const map<string, any>& src, map<string, any>& dst) {
+    // Also dumps new variables that may have been created in src, for global
+    for (auto& [key, value] : src) {
+        dst[key] = value;
+    }
 }
 
 ///////////////////////////////////////////////////////////
@@ -228,6 +243,14 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
     stack<vector<string>> variableStack;
     map<string,any> variables;
 
+    // Dump global variables to local variables at start of execution
+    for (auto& [key, value] : globalVariables) {
+        variables[key] = value;
+        // No need to add it to the variable stack, once a global variable is declared it cannot
+        // be destroyed until end of program
+    }
+    
+    // Pass function arguments to local variables
     for (int i = 0; i < args.size(); i++) {
         string argi = "arg" + to_string(i);
         variables[argi] = args[i];
@@ -239,6 +262,20 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
     // === RUNTIME PHASE ===
     //                         indentLevel 0 indicates eoFn             Handle eoFn with valid loops
     for (int line = startLine; !((line >= program.size() && loopLines.empty()) || (program[line].indentLevel == 0 && loopLines.empty())) ; line++) {
+
+        /*
+        cout << "line: " << program[line].code << endl;
+        cout << "globalVariables:";
+        for (auto& [key, value] : globalVariables) {
+            cout << " {" << key << "," << any_cast<int>(value) << "}";
+        }
+        cout << endl;
+        cout << "localVariables:";
+        for (auto& [key, value] : variables) {
+            cout << " {" << key << "," << any_cast<int>(value) << "}";
+        }
+        cout << endl;
+        */
 
         // Handle reentering loop indendation or more
         if (!loopLines.empty() && program[line].indentLevel <= loopLines.back().indentLevel) {
@@ -321,6 +358,9 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
                     variables.at(instruction[0]) = a;
                 }
             }
+
+            // Update global variables if exists
+            updateVariable(variables, globalVariables, instruction[0]);
         }
 
 
@@ -330,6 +370,9 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
             map<Key,any> cont;
             if (!existsVariable(variables, instruction[1])) variableStack.top().push_back(instruction[1]);
             variables[instruction[1]] = cont;
+
+            // Update global variables if exists
+            updateVariable(variables, globalVariables, instruction[1]);
         }
         else if (instruction.size() >= 2 && isContainerOp(instruction[1])) {
             if (instruction[1] == "get") {
@@ -399,12 +442,64 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
                 it--;
                 cont.erase(it);
             }
-            else {
+            else if (instruction[1] == "deq") {
                 // c deq
                 auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
                 auto it = cont.begin();
                 cont.erase(it);
             }
+            else if (instruction[1] == "num") {
+                // c num -> var
+                auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
+                variables.at(instruction[3]) = cont.size();
+            }
+            else if (instruction[1] == "igtk") {
+                // NOTE: igtk = indexed get key; expr has to eval to an integer
+                // c igtk expr -> var
+                auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
+                any key = evaluate(variables, instruction[2]);
+                if (key.type() != typeid(int)) {
+                    cerr << "igtk key does not correspon to an indexable value" << endl;
+                    exit(1);
+                }
+                int idx = any_cast<int>(key);
+                auto it = cont.begin();
+                advance(it, idx);
+                Key ky = it->first;
+                any rt;
+                if (auto p = get_if<int>(&ky.value)) {
+                    rt = *p;
+                }
+                else if (auto p = get_if<float>(&ky.value)) {
+                    rt = *p;
+                }
+                else if (auto p = get_if<string>(&ky.value)) {
+                    rt = *p;
+                }
+                else {
+                    cerr << "Variant key type error" << endl;
+                    exit(1);
+                }
+                variables.at(instruction[4]) = rt;
+            }
+            else if (instruction[1] == "igtv") {
+                // NOTE: igtk = indexed get key; expr has to eval to an integer
+                // c igtv expr -> var
+                auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
+                any key = evaluate(variables, instruction[2]);
+                if (key.type() != typeid(int)) {
+                    cerr << "igtv key does not correspon to an indexable value" << endl;
+                    exit(1);
+                }
+                int idx = any_cast<int>(key);
+                auto it = cont.begin();
+                advance(it, idx);
+                any rt = it->second;
+                variables.at(instruction[4]) = rt;
+            }
+
+            // Update global variables if exists
+            updateVariable(variables, globalVariables, instruction[0]);
         }
 
 
@@ -459,6 +554,9 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
             vector<any> funcArgs;
             for (int i = 1; i < instruction.size(); i++) funcArgs.push_back(evaluate(variables,instruction[i]));
             interpret(funcs.at(funcName)+1, funcs, program, importedFunctions, funcArgs);
+
+            // Update local variables
+            updateVariables(globalVariables, variables);
         }
 
 
@@ -469,7 +567,10 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
             else exit(stoi(instruction[1]));
         }
 
-
+        // GLOBAL VARIABLE DECLARATION
+        else if (instruction[0] == "global") {
+            globalVariables[instruction[1]] = any();
+        }
 
         // IMPORTED FUNCTIONS
         else {
@@ -510,6 +611,9 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
                 cerr << "Unrecognized instruction: " << program[line].code << endl;
                 exit(1);
             }
+
+            // Update local variables
+            updateVariables(globalVariables, variables);
         }
     }
 
@@ -531,7 +635,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 0.0.2 2025-11-27" << endl;
+        cout << "lite 0.1.0 2025-12-4" << endl;
         return 0;
     }
 

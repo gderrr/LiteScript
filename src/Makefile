@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -O2
 TARGET = lite
-SRCS = main.cpp CustomFunctions.cpp Evaluator.cpp
+SRCS = main.cpp CustomFunctions.cpp Evaluator.cpp GlobalVariables.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 all: $(TARGET)
