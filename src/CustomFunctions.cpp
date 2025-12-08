@@ -23,6 +23,17 @@ bool IO::execute (const string& function, vector<any>& args) {
                 string& p = any_cast<reference_wrapper<string>&>(a).get();
                 cout << p;
             }
+            else if (a.type() == typeid(storedInterpret)) {
+                auto& call = any_cast<storedInterpret&>(a);
+                any value = call.runInterpret();
+                if (value.type() == typeid(int)) cout << any_cast<int>(value);
+                else if (value.type() == typeid(float)) cout << any_cast<float>(value);
+                else if (value.type() == typeid(string)) cout << any_cast<string>(value);
+                else {
+                    cerr << "Unsupported return type of passed function call: " << value.type().name() << endl;
+                    exit(1);
+                } 
+            }
             else {
                 cerr << "Unsupported type: " << a.type().name() << endl;
                 exit(1);

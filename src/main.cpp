@@ -1,6 +1,6 @@
 #include "CustomFunctions.h"
 #include "Evaluator.h"
-#include "GlobalVariables.h"
+#include "Extras.h"
 
 #include <iostream>
 #include <fstream>
@@ -26,6 +26,11 @@ struct TLine {
     int indentLevel;
     string code;
 };
+
+// Global Variables
+map<string,int> funcs;
+vector<TLine> program;
+vector<unique_ptr<Function>> importedFunctions;
 
 struct Key {
     variant<int, float, string> value;
@@ -113,7 +118,7 @@ bool isFunctionCall (const string& third_token) {
     return (third_token[n-1] == ':');
 }
 
-map<string,int> mapFunctions (const vector<TLine>& program) {
+map<string,int> mapFunctions () {
     map<string,int> ret;
     for (int i = 0; i < program.size(); i++) {
         if (program[i].indentLevel == 0) ret[program[i].code] = i;
@@ -159,7 +164,7 @@ void updateVariables (const map<string, any>& src, map<string, any>& dst) {
 // PROCEDURES
 ///////////////////////////////////////////////////////////
 
-vector<TLine> parse (int startln, vector<unique_ptr<Function>>& importedFunctions, const vector<string>& readFile) {
+vector<TLine> parse (int startln, const vector<string>& readFile) {
     vector<TLine> parsedProgram;
     int ln = startln;
 
@@ -191,7 +196,7 @@ vector<TLine> parse (int startln, vector<unique_ptr<Function>>& importedFunction
                 }
 
                 vector<string> readFile = readClean(tokens[j]);
-                vector<TLine> requiredProgram = parse(ln, importedFunctions, readFile);
+                vector<TLine> requiredProgram = parse(ln, readFile);
                 for (int k = 0; k < requiredProgram.size(); k++) {
                     parsedProgram.push_back(requiredProgram[k]);
                     ln++;
@@ -233,7 +238,7 @@ vector<TLine> parse (int startln, vector<unique_ptr<Function>>& importedFunction
 
 // PRE: Program with valid LTS syntax
 // POST: Expected LTS behavior (without bugs, hopefully...)
-any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>& program, const vector<unique_ptr<Function>>& importedFunctions, const vector<any>& args) {
+any interpret (int startLine, const vector<any>& args) {
 
     // === BUILD PHASE ===
 
@@ -311,7 +316,7 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
                 funcName.pop_back();
                 vector<any> funcArgs;
                 for (int i = 3; i < instruction.size(); i++) funcArgs.push_back(evaluate(variables,instruction[i]));
-                value = interpret(funcs.at(funcName)+1, funcs, program, importedFunctions, funcArgs);
+                value = interpret(funcs.at(funcName)+1, funcArgs);
             }
             else {
                 value = evaluate(variables, instruction[2]);
@@ -548,7 +553,7 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
             funcName.pop_back();
             vector<any> funcArgs;
             for (int i = 1; i < instruction.size(); i++) funcArgs.push_back(evaluate(variables,instruction[i]));
-            interpret(funcs.at(funcName)+1, funcs, program, importedFunctions, funcArgs);
+            interpret(funcs.at(funcName)+1, funcArgs);
 
             // Update local variables
             updateVariables(globalVariables, variables);
@@ -570,11 +575,25 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
         // IMPORTED FUNCTIONS
         else {
             bool executed = false;
-            for (int i = 0; i < importedFunctions.size() && !executed; i++) {
-                vector<any> importArgs;
-                vector<any> exprArgs;
-                for (int j = 1; j < instruction.size(); j++) {
-                    if (!existsVariable(variables, instruction[j])) {
+            vector<any> importArgs;
+            vector<any> exprArgs;
+            for (int j = 1; j < instruction.size(); j++) {
+                if (!existsVariable(variables, instruction[j])) {
+                    if (isFunctionCall(instruction[j])) {
+                        // Here we encounter a function call, parse all the other remaining
+                        // arguments as arguments of the function call and insert a interpret() ref.
+                        InterpretFunc fp = &interpret;
+                        string fun = instruction[j];
+                        fun.pop_back();
+                        int interpretLine = funcs.at(fun);
+                        vector<any> interpretArgs;
+                        for (j = j+1; j < instruction.size(); j++) {
+                            interpretArgs.push_back(evaluate(variables, instruction[j]));
+                        }
+                        any stored = storedInterpret{fp, interpretLine+1, interpretArgs};
+                        importArgs.push_back(stored);
+                    }
+                    else {
                         // Here, it is treated as an expression, we have an auxiliary vector
                         // to store references to these temporary values
                         exprArgs.push_back(evaluate(variables, instruction[j]));
@@ -588,16 +607,19 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
                             importArgs.push_back(ref(any_cast<string&>(exprArgs.back())));
                         }
                     }
-                    else if (variables.at(instruction[j]).type() == typeid(int)) {
-                        importArgs.push_back(ref(any_cast<int&>(variables.at(instruction[j]))));
-                    }
-                    else if (variables.at(instruction[j]).type() == typeid(float)) {
-                        importArgs.push_back(ref(any_cast<float&>(variables.at(instruction[j]))));
-                    }
-                    else {
-                        importArgs.push_back(ref(any_cast<string&>(variables.at(instruction[j]))));
-                    }
                 }
+                else if (variables.at(instruction[j]).type() == typeid(int)) {
+                    importArgs.push_back(ref(any_cast<int&>(variables.at(instruction[j]))));
+                }
+                else if (variables.at(instruction[j]).type() == typeid(float)) {
+                    importArgs.push_back(ref(any_cast<float&>(variables.at(instruction[j]))));
+                }
+                else {
+                    importArgs.push_back(ref(any_cast<string&>(variables.at(instruction[j]))));
+                }
+            }
+
+            for (int i = 0; i < importedFunctions.size() && !executed; i++) {
                 executed = importedFunctions[i]->execute(instruction[0], importArgs);
             }
 
@@ -630,7 +652,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 0.1.1 2025-12-8" << endl;
+        cout << "lite 0.1.2 2025-12-8" << endl;
         return 0;
     }
 
@@ -645,8 +667,7 @@ int main (int argc, char* argv[]) {
 
     //for (string r: readFile) cout << r << endl;
 
-    vector<unique_ptr<Function>> importedFunctions;
-    vector<TLine> program = parse(0, importedFunctions, readFile);
+    program = parse(0, readFile);
 
     /*
     cout << "L I code" << endl;
@@ -656,9 +677,9 @@ int main (int argc, char* argv[]) {
     }
     */
     
-    map<string,int> funcs = mapFunctions(program);
+    funcs = mapFunctions();
     int startLine = funcs.at("start");
     vector<any> programArgs;
     for (int i = 2; i < argc; i++) programArgs.push_back(string(argv[i]));
-    interpret(startLine+1, funcs, program, importedFunctions, programArgs);
+    interpret(startLine+1, programArgs);
 }

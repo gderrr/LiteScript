@@ -1,0 +1,8 @@
+import io
+
+func
+	str = "World!\n"
+	return str
+
+start
+	display; "Hello_" func:
