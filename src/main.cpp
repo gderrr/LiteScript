@@ -103,8 +103,7 @@ bool isAssigner (const string& second_token) {
 }
 
 bool isContainerOp (const string& second_token) {
-    return (second_token == "get" || second_token == "put" || second_token == "equ" 
-        || second_token == "del" || second_token == "top" || second_token == "end"
+    return (second_token == "get" || second_token == "put" || second_token == "del" || second_token == "top" || second_token == "end"
         || second_token == "psh" || second_token == "pop" || second_token == "deq"
         || second_token == "num" || second_token == "igtk" || second_token == "igtv");
 }
@@ -391,10 +390,6 @@ any interpret (int startLine, const map<string,int>& funcs, const vector<TLine>&
                 else if (key.type() == typeid(float)) cont[Key{any_cast<float>(key)}] = evaluate(variables, instruction[4]);
                 else cont[Key{any_cast<string>(key)}] = evaluate(variables, instruction[4]);
             }
-            else if (instruction[1] == "equ") {
-                // c1 equ c2
-                variables.at(instruction[0]) = variables.at(instruction[2]);
-            }
             else if (instruction[1] == "del") {
                 // c del key
                 any key = evaluate(variables, instruction[2]);
@@ -635,7 +630,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 0.1.0 2025-12-4" << endl;
+        cout << "lite 0.1.1 2025-12-8" << endl;
         return 0;
     }
 

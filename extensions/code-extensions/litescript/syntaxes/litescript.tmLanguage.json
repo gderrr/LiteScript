@@ -28,7 +28,7 @@
         },
         {
             "name": "entity.name.function.container.litescript",
-            "match": "\\b(get|put|equ|del|top|end|psh|pop|deq|num|igtk|igtv)\\b"
+            "match": "\\b(get|put|del|top|end|psh|pop|deq|num|igtk|igtv)\\b"
         },
         {
             "name": "entity.name.function.declaration.litescript",
