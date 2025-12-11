@@ -13,6 +13,7 @@
 #include <typeinfo>
 #include <stack>
 #include <map>
+#include <set>
 #include <functional>
 #include <variant>
 #include <iterator>
@@ -30,14 +31,8 @@ struct TLine {
 // Global Variables
 map<string,int> funcs;
 vector<TLine> program;
+set<string> importStatements;
 vector<unique_ptr<Function>> importedFunctions;
-
-struct Key {
-    variant<int, float, string> value;
-    bool operator< (const Key& other) const {
-        return value < other.value;
-    }
-};
 
 struct TLoop {
     int line;
@@ -177,14 +172,8 @@ vector<TLine> parse (int startln, const vector<string>& readFile) {
 
         if (tokens[0] == "import") {
             for (int j = 1; j < tokens.size(); j++) {
-
-                // IMPORTED FUNCTIONS
-                if (tokens[j] == "io") importedFunctions.push_back(make_unique<IO>());
-
-                else {
-                    cerr << "Imported function is not a LiteScript standard library function: " << tokens[j] << endl;
-                    exit(1);
-                }
+                // Now, we don't create duplicated imports with this implementation
+                importStatements.insert(tokens[j]);
             }
         }
         else if (tokens[0] == "require") {
@@ -258,6 +247,7 @@ any interpret (int startLine, const vector<any>& args) {
     for (int i = 0; i < args.size(); i++) {
         string argi = "arg" + to_string(i);
         variables[argi] = args[i];
+        variables["args"] = args.size();
     }
 
     int prevIndentLevel = 0;
@@ -567,10 +557,14 @@ any interpret (int startLine, const vector<any>& args) {
             else exit(stoi(instruction[1]));
         }
 
+
+
         // GLOBAL VARIABLE DECLARATION
         else if (instruction[0] == "global") {
             globalVariables[instruction[1]] = any();
         }
+
+
 
         // IMPORTED FUNCTIONS
         else {
@@ -614,6 +608,9 @@ any interpret (int startLine, const vector<any>& args) {
                 else if (variables.at(instruction[j]).type() == typeid(float)) {
                     importArgs.push_back(ref(any_cast<float&>(variables.at(instruction[j]))));
                 }
+                else if (variables.at(instruction[j]).type() == typeid(map<Key,any>)){
+                    importArgs.push_back(ref(any_cast<map<Key,any>&>(variables.at(instruction[j]))));
+                }
                 else {
                     importArgs.push_back(ref(any_cast<string&>(variables.at(instruction[j]))));
                 }
@@ -652,7 +649,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 0.1.2 2025-12-8" << endl;
+        cout << "lite 0.1.3 2025-12-12" << endl;
         return 0;
     }
 
@@ -677,6 +674,10 @@ int main (int argc, char* argv[]) {
     }
     */
     
+    // Create imported functions
+    FunctionFactory& factory = FunctionFactory::getInstance();
+    importedFunctions = factory.createFunctions(importStatements);
+
     funcs = mapFunctions();
     int startLine = funcs.at("start");
     vector<any> programArgs;

@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <any>
+#include <variant>
 #include "CustomFunctions.h"
 using namespace std;
 
@@ -19,4 +20,9 @@ struct storedInterpret {
     vector<any> args;
 
     any runInterpret () const;
+};
+
+struct Key {
+    variant<int, float, string> value;
+    bool operator< (const Key& other) const;
 };

@@ -4,6 +4,28 @@
 #include <typeinfo>
 #include <functional>
 
+FunctionFactory::FunctionFactory () {}
+
+FunctionFactory& FunctionFactory::getInstance () {
+    static FunctionFactory INSTANCE;
+    return INSTANCE;
+}
+
+vector<unique_ptr<Function>> FunctionFactory::createFunctions (const set<string>& imports) {
+    vector<unique_ptr<Function>> ret;
+    for (string i : imports) {
+
+        // Imported function types go here
+        if (i == "io") ret.push_back(make_unique<IO>());
+
+        else {
+            cerr << "Imported function is not a Litescript module: " << i << endl;
+            exit(1);
+        }
+    }
+    return ret;
+}
+
 bool IO::execute (const string& function, vector<any>& args) {
 
     if (function == "display;") {

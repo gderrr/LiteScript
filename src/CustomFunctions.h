@@ -1,7 +1,9 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <set>
 #include <any>
+#include <memory>
 #include "Extras.h"
 using namespace std;
 
@@ -17,6 +19,22 @@ class Function {
     
     virtual bool execute (const string& function, vector<any>& args) = 0;
     virtual ~Function () {};
+
+};
+
+// Fancy singleton + simple factory design pattern
+class FunctionFactory {
+    
+    private:
+
+    FunctionFactory();
+    FunctionFactory(const FunctionFactory&) = delete;
+    FunctionFactory& operator= (const FunctionFactory&) = delete;
+
+    public:
+
+    static FunctionFactory& getInstance();
+    vector<unique_ptr<Function>> createFunctions (const set<string>& imports);
 
 };
 
