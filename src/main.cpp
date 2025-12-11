@@ -248,7 +248,7 @@ any interpret (int startLine, const vector<any>& args) {
         string argi = "arg" + to_string(i);
         variables[argi] = args[i];
     }
-    variables["args"] = args.size();
+    variables["args"] = int(args.size());
 
     int prevIndentLevel = 0;
     vector<TLoop> loopLines;
