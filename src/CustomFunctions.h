@@ -45,3 +45,10 @@ class IO: public Function {
     virtual bool execute (const string& function, vector<any>& args) override;
 
 };
+
+class Ascii: public Function {
+
+    public:
+
+    virtual bool execute (const string& function, vector<any>& args) override;
+};

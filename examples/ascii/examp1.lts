@@ -1,0 +1,14 @@
+import ascii io
+
+start
+	str = "Hello_world"
+	int = 0
+	len; str int
+	display; int "\n"
+	str2 = ""
+	srt = 0
+	fin = 4
+	substr; str srt fin str2
+	display; str2 "\n"
+	contains; str "world" int
+	display; int "\n"

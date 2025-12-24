@@ -1,0 +1,24 @@
+import ascii io
+
+start
+	str = "_Hello_World!_"
+	bool = 0
+	starts_with; str "_Hello" bool
+	display; bool "\n"
+	ends_with; str "World!_" bool
+	display; bool "\n"
+	aux = str
+	to_upper; aux
+	display; aux "\n"
+	aux = str
+	to_lower; aux
+	display; aux "\n"
+	aux = str
+	trim; aux
+	display; aux "\n"
+	aux = str
+	trim_left; aux
+	display; aux "\n"
+	aux = str
+	trim_right; aux
+	display; aux "\n"
