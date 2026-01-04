@@ -5,7 +5,6 @@
 #include <any>
 #include <memory>
 #include "Extras.h"
-using namespace std;
 
 // Polymorphism impl
 
@@ -17,7 +16,7 @@ class Function {
 
     public:
     
-    virtual bool execute (const string& function, vector<any>& args) = 0;
+    virtual bool execute (const std::string& function, std::vector<std::any>& args) = 0;
     virtual ~Function () {};
 
 };
@@ -34,7 +33,7 @@ class FunctionFactory {
     public:
 
     static FunctionFactory& getInstance();
-    vector<unique_ptr<Function>> createFunctions (const set<string>& imports);
+    std::vector<std::unique_ptr<Function>> createFunctions (const std::set<std::string>& imports);
 
 };
 
@@ -42,7 +41,7 @@ class IO: public Function {
 
     public:
 
-    virtual bool execute (const string& function, vector<any>& args) override;
+    virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
 
 };
 
@@ -50,5 +49,5 @@ class Ascii: public Function {
 
     public:
 
-    virtual bool execute (const string& function, vector<any>& args) override;
+    virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
 };

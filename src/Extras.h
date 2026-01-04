@@ -7,22 +7,21 @@
 #include <any>
 #include <variant>
 #include "CustomFunctions.h"
-using namespace std;
 
 // Header for globalVariables so they can be used anywhere
-extern map<string, any> globalVariables;
+extern std::map<std::string, std::any> globalVariables;
 
-using InterpretFunc = any(*)(int, const vector<any>&);
+using InterpretFunc = std::any(*)(int, const std::vector<std::any>&);
 
 struct storedInterpret {
     InterpretFunc func;
     int startLine;
-    vector<any> args;
+    std::vector<std::any> args;
 
-    any runInterpret () const;
+    std::any runInterpret () const;
 };
 
 struct Key {
-    variant<int, float, string> value;
+    std::variant<int, float, std::string> value;
     bool operator< (const Key& other) const;
 };

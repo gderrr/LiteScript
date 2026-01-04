@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <cmath>
+using namespace std;
 
 ////////////////////////////////////////////
 // UTILS

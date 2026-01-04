@@ -2,6 +2,5 @@
 #include <string>
 #include <any>
 #include <map>
-using namespace std;
 
-any evaluate (const map<string,any>& variables, const string& expression);
+std::any evaluate (const std::map<std::string,std::any>& variables, const std::string& expression);

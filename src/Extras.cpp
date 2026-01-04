@@ -1,5 +1,6 @@
 #include "Extras.h"
 #include <iostream> // DEBUG
+using namespace std;
 
 map<string, any> globalVariables;
 

@@ -6,6 +6,7 @@
 #include <string>
 #include <algorithm>
 #include <cctype>
+using namespace std;
 
 void IncorrectNumArguments () {
     cerr << "Incorrect number of arguments for imported function." << endl;
