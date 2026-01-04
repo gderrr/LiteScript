@@ -1,0 +1,23 @@
+import ascii io
+
+$ to_integer, to_real, to_string
+start
+	a = 0
+	b = 0
+	to_integer; "21" a
+	to_integer; "69" b
+	display; a "+" b "=" a+b "\n"
+	fa = 0.0
+	fb = 0.0
+	to_real; "3.1416" fb
+	to_real; "2.7183" fa
+	display; fa "^" fb "_(aka:_e^pi)_=_" fa**fb "\n"
+	str = ""
+	to_string; a str
+	display; str "\n"
+	to_string; fa str
+	display; str "\n"
+	to_string; "hello" str
+	display; str "\n"
+	to_string; 67 str
+	display; str "\n"

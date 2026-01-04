@@ -1,5 +1,6 @@
 import ascii io
 
+$ starts_with, ends_with, to_upper, to_lower, trim, trim_left, trim_right
 start
 	str = "_Hello_World!_"
 	bool = 0

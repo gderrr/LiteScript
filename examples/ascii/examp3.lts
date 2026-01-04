@@ -1,0 +1,26 @@
+import ascii
+import io
+
+$ cut, paste, replace, reverse, split
+start
+	str = "Hello_World!"
+	display; str "\n"
+	cut; 5 10 str
+	display; str "\n"
+	paste; "_Everyone" 5 str
+	display; str "\n"
+	replace; "Hello" "Goodbye" str
+	display; str "\n"
+	aux = str
+	reverse; aux
+	display; aux "\n"
+
+	container c
+	split; str c
+	n = 0
+	c num -> n
+	display; "c_has_" n "_elements:\n"
+	c igtv 0 -> aux
+	display; aux "\n"
+	c igtv 1 -> aux
+	display; aux "\n"

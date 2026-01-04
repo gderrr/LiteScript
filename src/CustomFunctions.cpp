@@ -295,11 +295,55 @@ bool Ascii::execute (const string& function, vector<any>& args) {
 
         return true;
     }
+    else if (function == "cut;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        auto& c = args[2];
+        int& start = any_cast<reference_wrapper<int>&>(a).get();
+        int& end = any_cast<reference_wrapper<int>&>(b).get();
+        string& str = any_cast<reference_wrapper<string>&>(c).get();
+        str.erase(start, end-start+1);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "paste;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        auto& c = args[2];
+        string& substr = any_cast<reference_wrapper<string>&>(a).get();
+        int& idx = any_cast<reference_wrapper<int>&>(b).get();
+        string& str = any_cast<reference_wrapper<string>&>(c).get();
+        str.insert(idx, substr);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
     else if (function == "replace;") {
         if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        auto& c = args[2];
+        string& from = any_cast<reference_wrapper<string>&>(a).get();
+        string& to = any_cast<reference_wrapper<string>&>(b).get();
+        string& str = any_cast<reference_wrapper<string>&>(c).get();
+        if (!from.empty()) {
+            size_t pos = 0;
+            while ((pos = str.find(from, pos)) != string::npos) {
+                str.replace(pos, from.length(), to);
+                pos += to.length();
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -309,7 +353,9 @@ bool Ascii::execute (const string& function, vector<any>& args) {
         if (args.size() != 1) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        string& str = any_cast<reference_wrapper<string>&>(a).get();
+        reverse(str.begin(), str.end());
 
         // === END DEFINITION ===
 
@@ -319,7 +365,21 @@ bool Ascii::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& str = any_cast<reference_wrapper<string>&>(a).get();
+        map<Key,any>& cont = any_cast<reference_wrapper<map<Key,any>>&>(b).get();
+        cont.clear();
+        int idx = 0;
+        size_t i = 0;
+        while (i < str.size()) {
+            while (i < str.size() && isspace(static_cast<unsigned char>(str[i]))) i++;
+            if (i >= str.size()) break;
+            size_t start = i;
+            while (i < str.size() && !isspace(static_cast<unsigned char>(str[i]))) i++;
+            cont[Key{int(idx)}] = str.substr(start, i - start);
+            idx++;
+        }
 
         // === END DEFINITION ===
 
@@ -329,7 +389,11 @@ bool Ascii::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& src = any_cast<reference_wrapper<string>&>(a).get();
+        int& dst = any_cast<reference_wrapper<int>&>(b).get();
+        dst = stoi(src);
 
         // === END DEFINITION ===
 
@@ -339,7 +403,11 @@ bool Ascii::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-        
+        auto& a = args[0];
+        auto& b = args[1];
+        string& src = any_cast<reference_wrapper<string>&>(a).get();
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        dst = stof(src);
 
         // === END DEFINITION ===
 
@@ -349,7 +417,21 @@ bool Ascii::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& dst = any_cast<reference_wrapper<string>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& src = any_cast<reference_wrapper<int>&>(a).get();
+            dst = to_string(src);
+        }
+        else if (a.type() == typeid(reference_wrapper<float>)) {
+            float& src = any_cast<reference_wrapper<float>&>(a).get();
+            dst = to_string(src);
+        }
+        else if (a.type() == typeid(reference_wrapper<string>)) {
+            string& src = any_cast<reference_wrapper<string>&>(a).get();
+            dst = src;
+        }
 
         // === END DEFINITION ===
 

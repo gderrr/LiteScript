@@ -442,7 +442,8 @@ any interpret (int startLine, const vector<any>& args) {
             else if (instruction[1] == "num") {
                 // c num -> var
                 auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
-                variables.at(instruction[3]) = cont.size();
+                int num = cont.size();
+                variables.at(instruction[3]) = num;
             }
             else if (instruction[1] == "igtk") {
                 // NOTE: igtk = indexed get key; expr has to eval to an integer
@@ -474,7 +475,7 @@ any interpret (int startLine, const vector<any>& args) {
                 variables.at(instruction[4]) = rt;
             }
             else if (instruction[1] == "igtv") {
-                // NOTE: igtk = indexed get key; expr has to eval to an integer
+                // NOTE: igtk = indexed get val; expr has to eval to an integer
                 // c igtv expr -> var
                 auto& cont = any_cast<map<Key,any>&>(variables.at(instruction[0]));
                 any key = evaluate(variables, instruction[2]);
@@ -650,7 +651,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 0.2.0 2025-12-24" << endl;
+        cout << "lite 0.2.0 2026-1-4" << endl;
         return 0;
     }
 

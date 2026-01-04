@@ -1,5 +1,6 @@
 import ascii io
 
+$ len, substr, contains
 start
 	str = "Hello_world"
 	int = 0
