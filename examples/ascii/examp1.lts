@@ -6,9 +6,7 @@ start
 	len; str int
 	display; int "\n"
 	str2 = ""
-	srt = 0
-	fin = 4
-	substr; str srt fin str2
+	substr; str 0 4 str2
 	display; str2 "\n"
 	contains; str "world" int
 	display; int "\n"

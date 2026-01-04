@@ -17,6 +17,7 @@
 #include <functional>
 #include <variant>
 #include <iterator>
+#include <deque>
 using namespace std;
 
 //////////////////////////////////////////////////////////////////
@@ -570,7 +571,7 @@ any interpret (int startLine, const vector<any>& args) {
         else {
             bool executed = false;
             vector<any> importArgs;
-            vector<any> exprArgs;
+            deque<any> exprArgs;
             for (int j = 1; j < instruction.size(); j++) {
                 if (!existsVariable(variables, instruction[j])) {
                     if (isFunctionCall(instruction[j])) {
