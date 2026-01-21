@@ -7,9 +7,10 @@
 #include <any>
 #include <variant>
 #include "CustomFunctions.h"
+#include "mutex_map.h"
 
 // Header for globalVariables so they can be used anywhere
-extern std::map<std::string, std::any> globalVariables;
+extern mutex_map<std::string, std::any> globalVariables;
 
 using InterpretFunc = std::any(*)(int, const std::vector<std::any>&);
 

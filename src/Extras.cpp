@@ -2,7 +2,7 @@
 #include <iostream> // DEBUG
 using namespace std;
 
-map<string, any> globalVariables;
+mutex_map<string, any> globalVariables;
 
 any storedInterpret::runInterpret() const {
     return func(startLine, args);

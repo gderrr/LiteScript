@@ -1,4 +1,5 @@
 devnotes/
+dist/
 *.o
 .vscode/
 .code-workspace

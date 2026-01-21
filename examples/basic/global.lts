@@ -1,0 +1,13 @@
+import io
+
+foo
+	n += 1
+
+start
+	global n
+	n = 2
+	$ Should display 2
+	display; n "\n"
+	foo:
+	$ Should display 3
+	display; n "\n"

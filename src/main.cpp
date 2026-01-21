@@ -143,16 +143,16 @@ bool contains (const vector<TLoop>& loopLines, int line) {
     return false;
 }
 
-void updateVariable (const map<string, any>& src, map<string, any>& dst, const string& var) {
-    if (existsVariable(dst, var) && existsVariable(src, var)) {
-        dst[var] = src.at(var);
+void updateVariable (const map<string, any>& vars, mutex_map<string, any>& globVars, const string& var) {
+    if (globVars.contains(var) && existsVariable(vars, var)) {
+        globVars.add_or_set(var, vars.at(var));
     }
 }
 
-void updateVariables (const map<string, any>& src, map<string, any>& dst) {
+void updateVariables (const mutex_map<string, any>& globVars, map<string, any>& vars) {
     // Also dumps new variables that may have been created in src, for global
-    for (auto& [key, value] : src) {
-        dst[key] = value;
+    for (auto& [key, value] : globVars.snapshot()) {
+        vars[key] = value;
     }
 }
 
@@ -238,7 +238,7 @@ any interpret (int startLine, const vector<any>& args) {
     map<string,any> variables;
 
     // Dump global variables to local variables at start of execution
-    for (auto& [key, value] : globalVariables) {
+    for (auto& [key, value] : globalVariables.snapshot()) {
         variables[key] = value;
         // No need to add it to the variable stack, once a global variable is declared it cannot
         // be destroyed until end of program
@@ -563,7 +563,7 @@ any interpret (int startLine, const vector<any>& args) {
 
         // GLOBAL VARIABLE DECLARATION
         else if (instruction[0] == "global") {
-            globalVariables[instruction[1]] = any();
+            globalVariables.add_or_set(instruction[1], any());
         }
 
 
@@ -651,7 +651,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 0.2.0 2026-1-4" << endl;
+        cout << "lite 0.2.1 2026-1-21" << endl;
         return 0;
     }
 
