@@ -6,7 +6,6 @@
 #include <mutex>
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "Extras.h"
@@ -62,8 +61,7 @@ class Thread: public Function {
     private:
 
     std::atomic<int> activeThreads;
-    std::unordered_map<int, std::unique_ptr<std::mutex>> implicitMutexes;
-    std::mutex mutexPool;
+    std::vector<std::mutex> implicitMutexes{128};
     struct ActiveThreadsGuard {
         std::atomic<int>& counter;
         ActiveThreadsGuard(std::atomic<int>& c, int n);

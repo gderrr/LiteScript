@@ -1,11 +1,5 @@
 import thread io
 
-tmp_wait
-	i = 0
-	N = 1 << 25
-	loop i < N
-		i += 1
-
 worker
 	N = arg0
 	id = 0
@@ -16,27 +10,18 @@ worker
 	idx = id*BS
 	fin = (id+1)*BS
 	loop idx < fin
+		lock_mutex; 0
 		globalContainer put idx <- 1
+		unlock_mutex; 0
 		idx += 1
 
 start
 	global globalContainer
 	container globalContainer
-	N = 40
+	N = 1 << 13
 	i = 0
 	loop i < N
 		globalContainer put i <- 0
 		i += 1
 
-	P = 0
-	num_cores; P
-	parallel; P worker: N
-	tmp_wait:
-
-	i = 0
-	loop i < N
-		val = 0
-		globalContainer get i -> val
-		display; val
-		i += 1
-	display; "\n"
+	parallel; 4 worker: N

@@ -558,16 +558,7 @@ bool Thread::execute (const string& function, vector<any>& args) {
 
         auto& a = args[0];
         int& idx = any_cast<reference_wrapper<int>&>(a).get();
-        std::lock_guard<std::mutex> guard(mutexPool);
-        auto it = implicitMutexes.find(idx);
-        if (it == implicitMutexes.end()) {
-            auto ptr = std::make_unique<std::mutex>();
-            std::mutex* m = ptr.get();
-            implicitMutexes.emplace(idx, std::move(ptr));
-            m->lock();
-        } else {
-            it->second->lock();
-        }
+        implicitMutexes[idx].lock();
 
         // === END DEFINITION ===
 
@@ -579,9 +570,7 @@ bool Thread::execute (const string& function, vector<any>& args) {
 
         auto& a = args[0];
         int& idx = any_cast<reference_wrapper<int>&>(a).get();
-        std::lock_guard<std::mutex> guard(mutexPool);
-        auto it = implicitMutexes.find(idx);
-        if (it != implicitMutexes.end()) it->second->unlock();
+        implicitMutexes[idx].unlock();
 
         // === END DEFINITION ===
 

@@ -14,13 +14,19 @@ worker
 	loop begin < fin
 		local_counter += 1
 		begin += 1
-	display; local_counter "_" id "\n"
-	$ Sometimes race condition, when locking sometimes deadlock
+	lock_mutex; 0
 	counter += local_counter
+	unlock_mutex; 0
 
 start
 	global counter
 	counter = 0
-	N = 10000
-	parallel; 8 worker: N
+	N = 1 << 23
+	P = 0
+	num_cores; P
+	parallel; P worker: N
 	display; counter "\n"
+
+$ BENCHMARKS
+$ Sequential: ~10s
+$ Parallel: ~3s

@@ -653,7 +653,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 0.3.0 2026-1-22" << endl;
+        cout << "lite 0.3.1 2026-1-22" << endl;
         return 0;
     }
 
