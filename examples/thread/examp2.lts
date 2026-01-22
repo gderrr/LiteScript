@@ -1,0 +1,26 @@
+import thread io
+
+worker
+	N = arg0
+
+	id = 0
+	thread_id; id
+	nt = 0
+	num_threads; nt
+	BS = N / nt
+	begin = id*BS
+	fin = (id+1)*BS
+	local_counter = 0
+	loop begin < fin
+		local_counter += 1
+		begin += 1
+	display; local_counter "_" id "\n"
+	$ Sometimes race condition, when locking sometimes deadlock
+	counter += local_counter
+
+start
+	global counter
+	counter = 0
+	N = 10000
+	parallel; 8 worker: N
+	display; counter "\n"

@@ -1,0 +1,42 @@
+import thread io
+
+tmp_wait
+	i = 0
+	N = 1 << 25
+	loop i < N
+		i += 1
+
+worker
+	N = arg0
+	id = 0
+	thread_id; id
+	nt = 0
+	num_threads; nt
+	BS = N / nt
+	idx = id*BS
+	fin = (id+1)*BS
+	loop idx < fin
+		globalContainer put idx <- 1
+		idx += 1
+
+start
+	global globalContainer
+	container globalContainer
+	N = 40
+	i = 0
+	loop i < N
+		globalContainer put i <- 0
+		i += 1
+
+	P = 0
+	num_cores; P
+	parallel; P worker: N
+	tmp_wait:
+
+	i = 0
+	loop i < N
+		val = 0
+		globalContainer get i -> val
+		display; val
+		i += 1
+	display; "\n"

@@ -1,7 +1,3 @@
-#include "CustomFunctions.h"
-#include "Evaluator.h"
-#include "Extras.h"
-
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -18,6 +14,12 @@
 #include <variant>
 #include <iterator>
 #include <deque>
+#include <any>
+
+#include "CustomFunctions.h"
+#include "Extras.h"
+#include "Evaluator.h"
+
 using namespace std;
 
 //////////////////////////////////////////////////////////////////
@@ -651,7 +653,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 0.2.1 2026-1-21" << endl;
+        cout << "lite 0.3.0 2026-1-22" << endl;
         return 0;
     }
 

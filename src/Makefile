@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -O2
+CXXFLAGS = -O2 -std=c++17
 TARGET = lite
 SRCS = main.cpp CustomFunctions.cpp Evaluator.cpp Extras.cpp
 OBJS = $(SRCS:.cpp=.o)

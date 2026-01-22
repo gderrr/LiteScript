@@ -1,0 +1,9 @@
+import thread io
+
+start
+	CLB = 0
+	cache_line_bytes; CLB
+	display; "Bytes_in_a_cache_line:_" CLB "\n"
+	NC = 0
+	num_cores; NC
+	display; "Number_of_cores:_" NC "\n"

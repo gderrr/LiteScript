@@ -1,12 +1,17 @@
 #include "Evaluator.h"
-#include <cstdlib>
-#include <vector>
-#include <stack>
+
+#include <any>
 #include <cctype>
-#include <sstream>
-#include <stdexcept>
-#include <iostream>
 #include <cmath>
+#include <cstdlib>
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <stack>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
 using namespace std;
 
 ////////////////////////////////////////////

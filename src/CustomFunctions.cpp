@@ -1,11 +1,23 @@
 #include "CustomFunctions.h"
-#include <iostream>
-#include <cstdlib>
-#include <typeinfo>
-#include <functional>
-#include <string>
+
 #include <algorithm>
+#include <any>
+#include <atomic>
 #include <cctype>
+#include <cstdlib>
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <set>
+#include <shared_mutex>
+#include <string>
+#include <thread>
+#include <typeinfo>
+#include <unistd.h>
+#include <unordered_map>
+#include <vector>
+
 using namespace std;
 
 void IncorrectNumArguments () {
@@ -27,6 +39,7 @@ vector<unique_ptr<Function>> FunctionFactory::createFunctions (const set<string>
         // Imported function types go here
         if (i == "io") ret.push_back(make_unique<IO>());
         else if (i == "ascii") ret.push_back(make_unique<Ascii>());
+        else if (i == "thread") ret.push_back(make_unique<Thread>());
 
         else {
             cerr << "Imported function is not a Litescript module: " << i << endl;
@@ -432,6 +445,143 @@ bool Ascii::execute (const string& function, vector<any>& args) {
             string& src = any_cast<reference_wrapper<string>&>(a).get();
             dst = src;
         }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    return false;
+}
+
+/////////////////////////////////////
+//   THREAD
+/////////////////////////////////////
+
+thread_local int currentThreadIndex = -1;
+
+Thread::ActiveThreadsGuard::ActiveThreadsGuard(std::atomic<int>& c, int n)
+    : counter(c) {
+    counter.store(n);
+}
+
+Thread::ActiveThreadsGuard::~ActiveThreadsGuard() {
+    counter.store(0);
+}
+
+bool Thread::execute (const string& function, vector<any>& args) {
+    if (function == "parallel;") {
+        if (args.size() < 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        int& n = any_cast<reference_wrapper<int>&>(a).get();
+        auto& job = any_cast<storedInterpret&>(b);
+        ActiveThreadsGuard guard(activeThreads, n);
+        vector<thread> threads;
+        threads.reserve(n);
+        for (int i = 0; i < n; i++) {
+            threads.emplace_back([job, i]() mutable {
+                currentThreadIndex = i;
+                job.runInterpret();
+            });
+        }
+        for (auto& t : threads) {
+            if (t.joinable()) {
+                t.join();
+            }
+        }
+        currentThreadIndex = -1;
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "thread_id;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        int& ret = any_cast<reference_wrapper<int>&>(a).get();
+        ret = currentThreadIndex;
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "num_threads;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        int& ret = any_cast<reference_wrapper<int>&>(a).get();
+        ret = activeThreads.load();
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "cache_line_bytes;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        int& ret = any_cast<reference_wrapper<int>&>(a).get();
+        // Default to 64 bytes.
+        ret = 64;
+        #if defined(_SC_LEVEL1_DCACHE_LINESIZE)
+        long size = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
+        if (size > 0) ret = static_cast<int>(size);
+        #endif
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "num_cores;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        int& ret = any_cast<reference_wrapper<int>&>(a).get();
+        long cores = sysconf(_SC_NPROCESSORS_ONLN);
+        if (cores < 1) cores = 1;
+        ret = static_cast<int>(cores);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "lock_mutex;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        int& idx = any_cast<reference_wrapper<int>&>(a).get();
+        std::lock_guard<std::mutex> guard(mutexPool);
+        auto it = implicitMutexes.find(idx);
+        if (it == implicitMutexes.end()) {
+            auto ptr = std::make_unique<std::mutex>();
+            std::mutex* m = ptr.get();
+            implicitMutexes.emplace(idx, std::move(ptr));
+            m->lock();
+        } else {
+            it->second->lock();
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "unlock_mutex;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        int& idx = any_cast<reference_wrapper<int>&>(a).get();
+        std::lock_guard<std::mutex> guard(mutexPool);
+        auto it = implicitMutexes.find(idx);
+        if (it != implicitMutexes.end()) it->second->unlock();
 
         // === END DEFINITION ===
 

@@ -1,0 +1,11 @@
+import thread io
+
+worker
+	id = 0
+	thread_id; id
+	display; id
+
+start
+	num_threads = 4
+	parallel; num_threads worker:
+	display; "\n"

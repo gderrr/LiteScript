@@ -1,9 +1,14 @@
 #pragma once
-#include <vector>
-#include <string>
-#include <set>
+
 #include <any>
+#include <atomic>
 #include <memory>
+#include <mutex>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include "Extras.h"
 
 // Polymorphism impl
@@ -46,6 +51,24 @@ class IO: public Function {
 };
 
 class Ascii: public Function {
+
+    public:
+
+    virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
+};
+
+class Thread: public Function {
+
+    private:
+
+    std::atomic<int> activeThreads;
+    std::unordered_map<int, std::unique_ptr<std::mutex>> implicitMutexes;
+    std::mutex mutexPool;
+    struct ActiveThreadsGuard {
+        std::atomic<int>& counter;
+        ActiveThreadsGuard(std::atomic<int>& c, int n);
+        ~ActiveThreadsGuard();
+    };
 
     public:
 
