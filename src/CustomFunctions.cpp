@@ -576,5 +576,17 @@ bool Thread::execute (const string& function, vector<any>& args) {
 
         return true;
     }
+    else if (function == "async_thread;") {
+        if (args.size() < 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& job = any_cast<storedInterpret&>(a);
+        std::thread([job]() mutable {job.runInterpret();}).detach();
+
+        // === END DEFINITION ===
+
+        return true;
+    }
     return false;
 }

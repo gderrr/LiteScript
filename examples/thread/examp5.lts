@@ -1,0 +1,12 @@
+import thread io
+
+worker
+	display; "Hello_from_detached_thread!\n"
+	done = 1
+
+start
+	global done
+	done = 0
+	async_thread; worker:
+	display; "Hello_from_main_thread!\n"
+	loop !done

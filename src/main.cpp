@@ -629,10 +629,10 @@ any interpret (int startLine, const vector<any>& args) {
                 cerr << "Unrecognized instruction: " << program[line].code << endl;
                 exit(1);
             }
-
-            // Update local variables
-            updateVariables(globalVariables, variables);
         }
+
+        // Update local variables
+        updateVariables(globalVariables, variables);
     }
 
     // === END OF FUNCTION ===
@@ -653,7 +653,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 0.3.1 2026-1-22" << endl;
+        cout << "lite 0.3.2 2026-1-23" << endl;
         return 0;
     }
 

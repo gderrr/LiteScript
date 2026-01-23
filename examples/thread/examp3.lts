@@ -23,5 +23,8 @@ start
 	loop i < N
 		globalContainer put i <- 0
 		i += 1
-
-	parallel; 4 worker: N
+	P = 0
+	num_cores; P
+	conditional (P%2)!=0
+		P -= 1
+	parallel; P worker: N

@@ -23,10 +23,9 @@ start
 	counter = 0
 	N = 1 << 23
 	P = 0
-	num_cores; P
-	parallel; P worker: N
+	parallel; 6 worker: N
 	display; counter "\n"
 
 $ BENCHMARKS
-$ Sequential: ~10s
-$ Parallel: ~3s
+$ Sequential: ~11.8s
+$ Parallel (6 threads): ~6.2s

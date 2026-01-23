@@ -259,12 +259,12 @@ any evalPostfix (const vector<Token>& postfix, const map<string, any>& vars) {
                 any a = st.top(); st.pop();
                 int val;
                 if (a.type() == typeid(int)) val = any_cast<int>(a);
-                else if (a.type() == typeid(float)) val = any_cast<float>(a) != 0.0f ? 1 : 0;
+                else if (a.type() == typeid(float)) val = (any_cast<float>(a) != 0.0f ? 1 : 0);
                 else {
                     cerr << "Invalid ! operand type" << endl;
                     exit(1);
                 }
-                st.push(val == 0 ? 1 : 0);
+                st.push(val != 0 ? 0 : 1);
                 continue;
             }
             if (op == "~") {
