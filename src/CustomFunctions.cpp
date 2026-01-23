@@ -4,11 +4,14 @@
 #include <any>
 #include <atomic>
 #include <cctype>
+#include <chrono>
+#include <cmath>
 #include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <random>
 #include <set>
 #include <shared_mutex>
 #include <string>
@@ -40,6 +43,7 @@ vector<unique_ptr<Function>> FunctionFactory::createFunctions (const set<string>
         if (i == "io") ret.push_back(make_unique<IO>());
         else if (i == "ascii") ret.push_back(make_unique<Ascii>());
         else if (i == "thread") ret.push_back(make_unique<Thread>());
+        else if (i == "math") ret.push_back(make_unique<Math>());
 
         else {
             cerr << "Imported function is not a Litescript module: " << i << endl;
@@ -583,6 +587,346 @@ bool Thread::execute (const string& function, vector<any>& args) {
         auto& a = args[0];
         auto& job = any_cast<storedInterpret&>(a);
         std::thread([job]() mutable {job.runInterpret();}).detach();
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    return false;
+}
+
+/////////////////////////////////////
+//   MATH
+/////////////////////////////////////
+
+constexpr float PI = 3.1415927f;
+
+Math::Math () {
+    mt.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+}
+
+bool Math::execute (const string& function, vector<any>& args) {
+    if (function == "sin;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& x = any_cast<reference_wrapper<int>&>(a).get();
+            dst = static_cast<float>(sin(x));
+        }
+        else {
+            float& x = any_cast<reference_wrapper<float>&>(a).get();
+            dst = static_cast<float>(sin(x));
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "cos;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& x = any_cast<reference_wrapper<int>&>(a).get();
+            dst = static_cast<float>(cos(x));
+        }
+        else {
+            float& x = any_cast<reference_wrapper<float>&>(a).get();
+            dst = static_cast<float>(cos(x));
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "tan;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& x = any_cast<reference_wrapper<int>&>(a).get();
+            dst = static_cast<float>(tan(x));
+        }
+        else {
+            float& x = any_cast<reference_wrapper<float>&>(a).get();
+            dst = static_cast<float>(tan(x));
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "asin;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& x = any_cast<reference_wrapper<int>&>(a).get();
+            dst = static_cast<float>(asin(x));
+        }
+        else {
+            float& x = any_cast<reference_wrapper<float>&>(a).get();
+            dst = static_cast<float>(asin(x));
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "acos;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& x = any_cast<reference_wrapper<int>&>(a).get();
+            dst = static_cast<float>(acos(x));
+        }
+        else {
+            float& x = any_cast<reference_wrapper<float>&>(a).get();
+            dst = static_cast<float>(acos(x));
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "atan;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& x = any_cast<reference_wrapper<int>&>(a).get();
+            dst = static_cast<float>(atan(x));
+        }
+        else {
+            float& x = any_cast<reference_wrapper<float>&>(a).get();
+            dst = static_cast<float>(atan(x));
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "sinh;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& x = any_cast<reference_wrapper<int>&>(a).get();
+            dst = static_cast<float>(sinh(x));
+        }
+        else {
+            float& x = any_cast<reference_wrapper<float>&>(a).get();
+            dst = static_cast<float>(sinh(x));
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "cosh;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& x = any_cast<reference_wrapper<int>&>(a).get();
+            dst = static_cast<float>(cosh(x));
+        }
+        else {
+            float& x = any_cast<reference_wrapper<float>&>(a).get();
+            dst = static_cast<float>(cosh(x));
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "tanh;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& x = any_cast<reference_wrapper<int>&>(a).get();
+            dst = static_cast<float>(tanh(x));
+        }
+        else {
+            float& x = any_cast<reference_wrapper<float>&>(a).get();
+            dst = static_cast<float>(tanh(x));
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "asinh;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& x = any_cast<reference_wrapper<int>&>(a).get();
+            dst = static_cast<float>(asinh(x));
+        }
+        else {
+            float& x = any_cast<reference_wrapper<float>&>(a).get();
+            dst = static_cast<float>(asinh(x));
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "acosh;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& x = any_cast<reference_wrapper<int>&>(a).get();
+            dst = static_cast<float>(acosh(x));
+        }
+        else {
+            float& x = any_cast<reference_wrapper<float>&>(a).get();
+            dst = static_cast<float>(acosh(x));
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "atanh;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& x = any_cast<reference_wrapper<int>&>(a).get();
+            dst = static_cast<float>(atanh(x));
+        }
+        else {
+            float& x = any_cast<reference_wrapper<float>&>(a).get();
+            dst = static_cast<float>(atanh(x));
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "deg2rad;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& x = any_cast<reference_wrapper<int>&>(a).get();
+            dst = static_cast<float>(x) * (PI / 180.f);
+        }
+        else {
+            float& x = any_cast<reference_wrapper<float>&>(a).get();
+            dst = static_cast<float>(x) * (PI / 180.f);
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "rad2deg;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        float& dst = any_cast<reference_wrapper<float>&>(b).get();
+        if (a.type() == typeid(reference_wrapper<int>)) {
+            int& x = any_cast<reference_wrapper<int>&>(a).get();
+            dst = static_cast<float>(x) * (180.f / PI);
+        }
+        else {
+            float& x = any_cast<reference_wrapper<float>&>(a).get();
+            dst = static_cast<float>(x) * (180.f / PI);
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "rand_integer;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        auto& c = args[2];
+        int& min = any_cast<reference_wrapper<int>&>(a).get();
+        int& max = any_cast<reference_wrapper<int>&>(b).get();
+        int& dst = any_cast<reference_wrapper<int>&>(c).get();
+        std::uniform_int_distribution<int> dist(min, max);
+        dst = dist(mt);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "rand_real;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        auto& c = args[2];
+        float& min = any_cast<reference_wrapper<float>&>(a).get();
+        float& max = any_cast<reference_wrapper<float>&>(b).get();
+        float& dst = any_cast<reference_wrapper<float>&>(c).get();
+        std::uniform_real_distribution<float> dist(min, max);
+        dst = dist(mt);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "get_pi;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        float& dst = any_cast<reference_wrapper<float>&>(a).get();
+        dst = PI;
 
         // === END DEFINITION ===
 

@@ -4,6 +4,7 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
+#include <random>
 #include <set>
 #include <string>
 #include <vector>
@@ -70,5 +71,17 @@ class Thread: public Function {
 
     public:
 
+    virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
+};
+
+class Math: public Function {
+
+    private:
+
+    std::mt19937 mt;
+
+    public:
+
+    Math();
     virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
 };
