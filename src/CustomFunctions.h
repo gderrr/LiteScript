@@ -2,6 +2,7 @@
 
 #include <any>
 #include <atomic>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <random>
@@ -84,4 +85,18 @@ class Math: public Function {
 
     Math();
     virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
+};
+
+class Unix: public Function {
+
+    private:
+
+    std::map<std::string,void*> memoryChunks;
+    std::vector<int> implicitPipes{128};
+
+    public:
+
+    Unix();
+    virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
+    ~Unix();
 };

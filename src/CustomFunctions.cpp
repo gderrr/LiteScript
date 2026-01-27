@@ -7,14 +7,18 @@
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
+#include <ctime>
 #include <functional>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <random>
 #include <set>
 #include <shared_mutex>
+#include <signal.h>
 #include <string>
+#include <sys/wait.h>
 #include <thread>
 #include <typeinfo>
 #include <unistd.h>
@@ -927,6 +931,64 @@ bool Math::execute (const string& function, vector<any>& args) {
         auto& a = args[0];
         float& dst = any_cast<reference_wrapper<float>&>(a).get();
         dst = PI;
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    return false;
+}
+
+/////////////////////////////////////
+//   MATH
+/////////////////////////////////////
+
+Unix::Unix () {
+    for (int i = 0; i < implicitPipes.size(); i++) {
+        implicitPipes[i] = -1; // -1 indicates unused pipe.
+    }
+}
+
+Unix::~Unix () {
+    for (int i = 0; i < implicitPipes.size(); i++) {
+        if (implicitPipes[i] != -1) close(implicitPipes[i]); // Close pipes automatically at destruction 
+    }
+    for (auto& a : memoryChunks) {
+        free(a.second); // Free all leftover memory allocations automatically at destruction
+    }
+}
+
+bool Unix::execute (const string& function, vector<any>& args) {
+    if (function == "fork;") {
+        if (args.size() > 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        int ret = fork();
+        if (args.size() == 1) {
+            auto& a = args[0];
+            int& dst = any_cast<reference_wrapper<int>&>(a).get();
+            dst = ret;
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "exec;") {
+        if (args.size() < 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        string& file = any_cast<reference_wrapper<string>&>(a).get();
+        vector<char*> argVec;
+        for (int i = 1; i < args.size(); i++) {
+            auto& x = args[i];
+            string& arg = any_cast<reference_wrapper<string>&>(x).get();
+            argVec.push_back(const_cast<char*>(arg.c_str()));
+        }
+        argVec.push_back(nullptr);
+        execv(file.c_str(), argVec.data());
+        execvp(file.c_str(), argVec.data()); // Fallback in case execv fails, search with path
 
         // === END DEFINITION ===
 
