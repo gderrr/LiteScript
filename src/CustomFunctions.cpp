@@ -947,13 +947,16 @@ bool Math::execute (const string& function, vector<any>& args) {
 
 Unix::Unix () {
     for (int i = 0; i < implicitPipes.size(); i++) {
-        implicitPipes[i] = -1; // -1 indicates unused pipe.
+        // -1 indicates unused pipe.
+        implicitPipes[i].first = implicitPipes[i].second = -1;
     }
 }
 
 Unix::~Unix () {
     for (int i = 0; i < implicitPipes.size(); i++) {
-        if (implicitPipes[i] != -1) close(implicitPipes[i]); // Close pipes automatically at destruction 
+        // Close pipes automatically at destruction 
+        if (implicitPipes[i].first != -1) close(implicitPipes[i].first);
+        if (implicitPipes[i].second != -1) close(implicitPipes[i].second);
     }
     for (auto& a : memoryChunks) {
         free(a.second); // Free all leftover memory allocations automatically at destruction
@@ -1168,7 +1171,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
                 string& src = any_cast<reference_wrapper<string>&>(c).get();
                 // Potentally expensive copy, might rewrite this later
                 string value = src;
-                memcpy(static_cast<char*>(it->second)+offset, value.data(), value.size());
+                memcpy(static_cast<char*>(it->second)+offset, src.data(), src.size());
             }
         }
 
@@ -1196,7 +1199,15 @@ bool Unix::execute (const string& function, vector<any>& args) {
         if (args.size() != 1) IncorrectNumArguments();
         // === START DEFINTION ===
 
-
+        auto& a = args[0];
+        int& idx = any_cast<reference_wrapper<int>&>(a).get();
+        int fd[2];
+        if (pipe(fd) == -1) {
+            cerr << "Pipe error." << endl;
+            exit(1);
+        }
+        implicitPipes[idx].first = fd[0];
+        implicitPipes[idx].second = fd[1];
 
         // === END DEFINITION ===
 
@@ -1206,7 +1217,30 @@ bool Unix::execute (const string& function, vector<any>& args) {
         if (args.size() < 2) IncorrectNumArguments();
         // === START DEFINTION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        int& idx = any_cast<reference_wrapper<int>&>(a).get();
+        if (b.type() == typeid(reference_wrapper<int>)) {
+            int& dst = any_cast<reference_wrapper<int>&>(b).get();
+            int aux;
+            int n = read(implicitPipes[idx].first, &aux, sizeof(int));
+            dst = aux;
+        }
+        else if (b.type() == typeid(reference_wrapper<float>)) {
+            float& dst = any_cast<reference_wrapper<float>&>(b).get();
+            float aux;
+            int n = read(implicitPipes[idx].first, &aux, sizeof(float));
+            dst = aux;
+        }
+        else if (b.type() == typeid(reference_wrapper<string>)) {
+            if (args.size() != 3) IncorrectNumArguments();
+            auto& c = args[2];
+            string& dst = any_cast<reference_wrapper<string>&>(b).get();
+            int& bytes = any_cast<reference_wrapper<int>&>(c).get();
+            dst.clear();
+            dst.resize(bytes);
+            int n = read(implicitPipes[idx].first, &dst[0], bytes);
+        }
 
         // === END DEFINITION ===
 
@@ -1216,17 +1250,53 @@ bool Unix::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINTION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        int& idx = any_cast<reference_wrapper<int>&>(a).get();
+        if (b.type() == typeid(reference_wrapper<int>)) {
+            int& src = any_cast<reference_wrapper<int>&>(b).get();
+            int aux = src;
+            int n = write(implicitPipes[idx].second, &aux, sizeof(int));
+        }
+        else if (b.type() == typeid(reference_wrapper<float>)) {
+            float& src = any_cast<reference_wrapper<float>&>(b).get();
+            float aux = src;
+            int n = write(implicitPipes[idx].second, &aux, sizeof(float));
+        }
+        else if (b.type() == typeid(reference_wrapper<string>)) {
+            string& src = any_cast<reference_wrapper<string>&>(b).get();
+            int n = write(implicitPipes[idx].second, src.data(), src.size());
+        }
 
         // === END DEFINITION ===
 
         return true;
     }
-    else if (function == "pipe_close;") {
+    else if (function == "pipe_close_read;") {
         if (args.size() != 1) IncorrectNumArguments();
         // === START DEFINTION ===
 
+        auto& a = args[0];
+        int& idx = any_cast<reference_wrapper<int>&>(a).get();
+        if (implicitPipes[idx].first != -1) {
+            close(implicitPipes[idx].first);
+            implicitPipes[idx].first = -1;
+        }
 
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "pipe_close_write;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+        auto& a = args[0];
+        int& idx = any_cast<reference_wrapper<int>&>(a).get();
+        if (implicitPipes[idx].second != -1) {
+            close(implicitPipes[idx].second);
+            implicitPipes[idx].second = -1;
+        }
 
         // === END DEFINITION ===
 

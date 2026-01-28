@@ -1,0 +1,18 @@
+import unix io
+
+start
+	pipe_open; 0
+	ret = 0
+	fork; ret
+	conditional ret == 0
+		pipe_close_write; 0
+		str = ""
+		pipe_read; 0 str 12
+		display; str "\n"
+		$ Leaving this out would also work
+		pipe_close_read; 0
+		exit
+	pipe_close_read; 0
+	pipe_write; 0 "Hello_world!"
+	$ Leaving this out would also work
+	pipe_close_write; 0
