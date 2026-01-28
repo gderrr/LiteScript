@@ -1,0 +1,18 @@
+import unix io
+
+start
+	heap_allocate; "ptr" 4
+	value = 33
+	heap_write; "ptr" 0 value
+	ret = 0
+	heap_read; "ptr" 0 ret
+	display; ret "\n"
+	heap_free; "ptr"
+
+	heap_allocate; "ptr2" 4
+	char = 69
+	heap_write; "ptr2" 0 char
+	str = ""
+	heap_read; "ptr2" 0 str 1
+	display; str "\n"
+	$ "ptr2" memory chunk should automatically be freed

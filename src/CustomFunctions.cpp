@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 #include <functional>
 #include <iostream>
@@ -1088,6 +1089,18 @@ bool Unix::execute (const string& function, vector<any>& args) {
 
         auto& a = args[0];
         auto& b = args[1];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        int& bytes = any_cast<reference_wrapper<int>&>(b).get();
+        void *ptr = malloc(bytes);
+        auto it = memoryChunks.find(id);
+        if (it != memoryChunks.end()) {
+            // If it already exists, free and reallocate with new chunk
+            free(it->second);
+            it->second = ptr;
+        }
+        else {
+            memoryChunks[id] = ptr;
+        }
 
         // === END DEFINITION ===
 
@@ -1097,7 +1110,34 @@ bool Unix::execute (const string& function, vector<any>& args) {
         if (args.size() < 3) IncorrectNumArguments();
         // === START DEFINTION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        auto& c = args[2];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        int& offset = any_cast<reference_wrapper<int>&>(b).get();
+        auto it = memoryChunks.find(id);
+        if (it != memoryChunks.end()) {
+            if (c.type() == typeid(reference_wrapper<int>)) {
+                int& dst = any_cast<reference_wrapper<int>&>(c).get();
+                int value;
+                memcpy(&value, static_cast<char*>(it->second)+offset, sizeof(int));
+                dst = value;
+            }
+            else if (c.type() == typeid(reference_wrapper<float>)) {
+                float& dst = any_cast<reference_wrapper<float>&>(c).get();
+                float value;
+                memcpy(&value, static_cast<char*>(it->second)+offset, sizeof(float));
+                dst = value;
+            }
+            else if (c.type() == typeid(reference_wrapper<string>)) {
+                if (args.size() != 4) IncorrectNumArguments();
+                auto& d = args[3];
+                string& dst = any_cast<reference_wrapper<string>&>(c).get();
+                int& bytes = any_cast<reference_wrapper<int>&>(d).get();
+                const char* value = static_cast<char*>(it->second) + offset;
+                dst = string(value, bytes);
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -1107,7 +1147,30 @@ bool Unix::execute (const string& function, vector<any>& args) {
         if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINTION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        auto& c = args[2];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        int& offset = any_cast<reference_wrapper<int>&>(b).get();
+        auto it = memoryChunks.find(id);
+        if (it != memoryChunks.end()) {
+            if (c.type() == typeid(reference_wrapper<int>)) {
+                int& src = any_cast<reference_wrapper<int>&>(c).get();
+                int value = src;
+                memcpy(static_cast<char*>(it->second)+offset, &value, sizeof(int));
+            }
+            else if (c.type() == typeid(reference_wrapper<float>)) {
+                float& src = any_cast<reference_wrapper<float>&>(c).get();
+                float value = src;
+                memcpy(static_cast<char*>(it->second)+offset, &value, sizeof(float));
+            }
+            else if (c.type() == typeid(reference_wrapper<string>)) {
+                string& src = any_cast<reference_wrapper<string>&>(c).get();
+                // Potentally expensive copy, might rewrite this later
+                string value = src;
+                memcpy(static_cast<char*>(it->second)+offset, value.data(), value.size());
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -1117,7 +1180,13 @@ bool Unix::execute (const string& function, vector<any>& args) {
         if (args.size() != 1) IncorrectNumArguments();
         // === START DEFINTION ===
 
-
+        auto& a = args[0];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        auto it = memoryChunks.find(id);
+        if (it != memoryChunks.end()) {
+            free(it->second);
+            memoryChunks.erase(it);
+        }
 
         // === END DEFINITION ===
 

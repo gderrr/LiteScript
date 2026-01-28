@@ -92,7 +92,6 @@ class Unix: public Function {
     private:
 
     std::map<std::string,void*> memoryChunks;
-    std::mutex memoryMutex;
     std::vector<int> implicitPipes{128};
 
     public:
