@@ -48,6 +48,7 @@ vector<unique_ptr<Function>> FunctionFactory::createFunctions (const set<string>
         else if (i == "ascii") ret.push_back(make_unique<Ascii>());
         else if (i == "thread") ret.push_back(make_unique<Thread>());
         else if (i == "math") ret.push_back(make_unique<Math>());
+        else if (i == "unix") ret.push_back(make_unique<Unix>());
 
         else {
             cerr << "Imported function is not a Litescript module: " << i << endl;
@@ -989,6 +990,174 @@ bool Unix::execute (const string& function, vector<any>& args) {
         argVec.push_back(nullptr);
         execv(file.c_str(), argVec.data());
         execvp(file.c_str(), argVec.data()); // Fallback in case execv fails, search with path
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "get_pid;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+        auto& a = args[0];
+        int& ret = any_cast<reference_wrapper<int>&>(a).get();
+        ret = getpid();
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "get_ppid;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+        auto& a = args[0];
+        int& ret = any_cast<reference_wrapper<int>&>(a).get();
+        ret = getppid();
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "waitpid;") {
+        if (args.size() < 1) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+        auto& a = args[0];
+        int& pid = any_cast<reference_wrapper<int>&>(a).get();
+        int ret = waitpid(pid, nullptr, 0);
+        if (args.size() == 2) {
+            auto& b = args[1];
+            int& dst = any_cast<reference_wrapper<int>&>(b).get();
+            dst = ret;
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "kill;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        int& pid = any_cast<reference_wrapper<int>&>(a).get();
+        int& sig = any_cast<reference_wrapper<int>&>(b).get();
+        kill(pid, sig);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "sleep;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+        auto& a = args[0];
+        int& x = any_cast<reference_wrapper<int>&>(a).get();
+        std::this_thread::sleep_for(std::chrono::milliseconds(x));
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "time;") {
+        if (args.size() < 1) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+        uint64_t t = static_cast<uint64_t>(time(nullptr));
+        uint32_t low  = static_cast<uint32_t>(t & 0xFFFFFFFFULL);
+        uint32_t high = static_cast<uint32_t>(t >> 32);
+        auto& a = args[0];
+        int& dst1 = any_cast<reference_wrapper<int>&>(a).get();
+        dst1 = static_cast<int>(low);
+        if (args.size() == 2) {
+            auto& b = args[1];
+            int& dst2 = any_cast<reference_wrapper<int>&>(b).get();
+            dst2 = static_cast<int>(high);
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "heap_allocate;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "heap_read;") {
+        if (args.size() < 3) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "heap_write;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "heap_free;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "pipe_open;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "pipe_read;") {
+        if (args.size() < 2) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "pipe_write;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "pipe_close;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINTION ===
+
+
 
         // === END DEFINITION ===
 

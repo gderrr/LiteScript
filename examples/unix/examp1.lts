@@ -1,0 +1,36 @@
+import unix io
+
+foo
+	pid = 0
+	ppid = 0
+	get_pid; pid
+	get_ppid; ppid
+	display; "Hello_from_child_process_" pid "_with_parent_" ppid "\n"
+	i = 0
+	N = 10000
+	loop i < N
+		$ do stuff
+		i += 1
+	exec; "ls" "ls"
+
+start
+	pid = 0
+	get_pid; pid
+	display; "Hello_from_process_" pid "\n"
+	
+	N = 4
+	i = 0
+	loop i < N
+		ret = 0
+		fork; ret
+		conditional ret == 0
+			foo:
+		i += 1
+	ret2 = 0
+	waitpid; -1 ret2
+	loop ret2 >= 0
+		display; "Process_" ret2 "_has_ended\n"
+		waitpid; -1 ret2
+	$ send SIGKILL to himself
+	kill; pid 9
+	
