@@ -52,7 +52,7 @@ vector<unique_ptr<Function>> FunctionFactory::createFunctions (const set<string>
         else if (i == "unix") ret.push_back(make_unique<Unix>());
 
         else {
-            cerr << "Imported function is not a Litescript module: " << i << endl;
+            cerr << "Imported module is not a Litescript module: " << i << endl;
             exit(1);
         }
     }
