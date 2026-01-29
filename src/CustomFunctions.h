@@ -95,7 +95,7 @@ class Unix: public Function {
 
     private:
 
-    static thread_local std::map<std::string, std::unique_ptr<void, decltype(&free)>> memoryChunks;
+    std::map<std::string, std::unique_ptr<void, decltype(&free)>> memoryChunks;
     std::vector<std::pair<int,int>> implicitPipes{128};
 
     public:

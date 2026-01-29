@@ -945,8 +945,6 @@ bool Math::execute (const string& function, vector<any>& args) {
 //   UNIX
 /////////////////////////////////////
 
-thread_local map<string, unique_ptr<void, decltype(&free)>> Unix::memoryChunks;
-
 Unix::Unix () {
     for (int i = 0; i < implicitPipes.size(); i++) {
         // -1 indicates unused pipe.
