@@ -1,0 +1,40 @@
+import filesystem io
+
+start
+	dir_create; "folder"
+	bool = 0
+	path_exists; "./folder" bool
+	display; bool "\n"
+	is_file; "./folder" bool
+	display; bool "\n"
+	is_dir; "./folder" bool
+	display; bool "\n"
+	cwd = ""
+	get_cwd; cwd
+	display; cwd "\n"
+	set_cwd; "./folder"
+	file_open; "file" "sample.txt"
+	file_write; "file" "ABCDEFGHIHJKLMNOPQRSTUVWXYZ"
+	set_cwd; ".."
+	container c
+	walk; "." c
+	n = 0
+	c num -> n
+	display; n "\n"
+	str = ""
+	c get 0 -> str
+	display; str "\n"
+	str2 = ""
+	get_filename; "./folder/sample.txt" str2
+	display; str2 "\n"
+	str3 = ""
+	get_extension; "./folder/sample.txt" str3
+	display; str3 "\n"
+	str4 = ""
+	file_move_cursor; "file" -10
+	file_cursor; "file" n
+	display; n "\n"
+	file_readall; "file" str4
+	display; str4 "\n"
+	file_cursor; "file" n
+	display; n "\n"

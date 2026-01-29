@@ -6,6 +6,7 @@
 #include <cctype>
 #include <chrono>
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
@@ -1327,8 +1328,8 @@ bool Filesystem::execute (const string& function, vector<any>& args) {
             auto& c = args[2];
             string& mode = any_cast<reference_wrapper<string>&>(c).get();
             if (mode == "r" || mode == "read") open_mode |= ios::in;
-            else if (mode == "w" || mode == "write") open_mode |= ios::out | ios::trunc;
-            else if (mode == "r/w" || mode == "read/write") open_mode |= ios::in | ios::out | ios::trunc;
+            else if (mode == "w" || mode == "write") open_mode |= ios::out;
+            else if (mode == "r/w" || mode == "read/write") open_mode |= ios::in | ios::out;
             else {
                 cerr << "Unknown mode for opening file." << endl;
                 exit(1);
@@ -1407,6 +1408,30 @@ bool Filesystem::execute (const string& function, vector<any>& args) {
                     fs.seekp(pos);
                 }
             }
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "file_readall;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        string& dst = any_cast<reference_wrapper<string>&>(b).get();
+        if (fileStreamExists(id)) {
+            // Read entire file while maintaining cursor where it was
+            auto& fs = *fileStreams[id];
+            streampos aux = fs.tellg();
+            fs.seekg(0, ios::end);
+            size_t sz = fs.tellg();
+            fs.seekg(0);
+            dst = string(sz, '\0');
+            fs.read(dst.data(), sz);
+            fs.seekg(aux);
         }
 
         // === END DEFINITION ===
@@ -1502,7 +1527,19 @@ bool Filesystem::execute (const string& function, vector<any>& args) {
         if (args.size() < 1) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        string& name = any_cast<reference_wrapper<string>&>(a).get();
+        filesystem::path pth = filesystem::current_path();
+        if (args.size() == 2) {
+            auto& b = args[1];
+            string& str = any_cast<reference_wrapper<string>&>(b).get();
+            pth = filesystem::path(str);
+            if (!pth.is_absolute()) {
+                pth = filesystem::current_path() / pth;
+            }
+        }
+        filesystem::path target = pth / name;
+        filesystem::create_directories(target);
 
         // === END DEFINITION ===
 
@@ -1512,7 +1549,9 @@ bool Filesystem::execute (const string& function, vector<any>& args) {
         if (args.size() != 1) IncorrectNumArguments();
         // === START DEFINITION ===
 
-        
+        auto& a = args[0];
+        string& path = any_cast<reference_wrapper<string>&>(a).get();
+        filesystem::remove_all(path);
 
         // === END DEFINITION ===
 
@@ -1522,7 +1561,11 @@ bool Filesystem::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& path = any_cast<reference_wrapper<string>&>(a).get();
+        int& dst = any_cast<reference_wrapper<int>&>(b).get();
+        dst = filesystem::exists(path) ? 1 : 0;
 
         // === END DEFINITION ===
 
@@ -1532,7 +1575,11 @@ bool Filesystem::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& path = any_cast<reference_wrapper<string>&>(a).get();
+        int& dst = any_cast<reference_wrapper<int>&>(b).get();
+        dst = filesystem::is_regular_file(path) ? 1 : 0;
 
         // === END DEFINITION ===
 
@@ -1542,7 +1589,11 @@ bool Filesystem::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& path = any_cast<reference_wrapper<string>&>(a).get();
+        int& dst = any_cast<reference_wrapper<int>&>(b).get();
+        dst = filesystem::is_directory(path) ? 1 : 0;
 
         // === END DEFINITION ===
 
@@ -1552,7 +1603,16 @@ bool Filesystem::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& path = any_cast<reference_wrapper<string>&>(a).get();
+        map<Key,any>& cont = any_cast<reference_wrapper<map<Key,any>>&>(b).get();
+        cont.clear();
+        int idx = 0;
+        for (const auto& entry : filesystem::directory_iterator(path)) {
+            cont[Key{int(idx)}] = entry.path().filename().string();
+            idx++;
+        }
 
         // === END DEFINITION ===
 
@@ -1562,7 +1622,9 @@ bool Filesystem::execute (const string& function, vector<any>& args) {
         if (args.size() != 1) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        string& dst = any_cast<reference_wrapper<string>&>(a).get();
+        dst = filesystem::current_path().string();
 
         // === END DEFINITION ===
 
@@ -1572,7 +1634,9 @@ bool Filesystem::execute (const string& function, vector<any>& args) {
         if (args.size() != 1) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        string& src = any_cast<reference_wrapper<string>&>(a).get();
+        if (filesystem::exists(src)) filesystem::current_path(src);
 
         // === END DEFINITION ===
 
@@ -1582,7 +1646,11 @@ bool Filesystem::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& path = any_cast<reference_wrapper<string>&>(a).get();
+        string& dst = any_cast<reference_wrapper<string>&>(b).get();
+        dst = filesystem::path(path).filename().string();
 
         // === END DEFINITION ===
 
@@ -1592,7 +1660,12 @@ bool Filesystem::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& path = any_cast<reference_wrapper<string>&>(a).get();
+        string& dst = any_cast<reference_wrapper<string>&>(b).get();
+        if (filesystem::is_regular_file(path)) dst = filesystem::path(path).extension().string();
+        else dst = "";
 
         // === END DEFINITION ===
 
