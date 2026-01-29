@@ -9,7 +9,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <filesystem>
 #include <functional>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -50,6 +52,7 @@ vector<unique_ptr<Function>> FunctionFactory::createFunctions (const set<string>
         else if (i == "thread") ret.push_back(make_unique<Thread>());
         else if (i == "math") ret.push_back(make_unique<Math>());
         else if (i == "unix") ret.push_back(make_unique<Unix>());
+        else if (i == "filesystem") ret.push_back(make_unique<Filesystem>());
 
         else {
             cerr << "Imported module is not a Litescript module: " << i << endl;
@@ -1292,6 +1295,304 @@ bool Unix::execute (const string& function, vector<any>& args) {
             close(implicitPipes[idx].second);
             implicitPipes[idx].second = -1;
         }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    return false;
+}
+
+/////////////////////////////////////
+//   FILESYSTEM
+/////////////////////////////////////
+
+thread_local unordered_map<string, unique_ptr<fstream>> Filesystem::fileStreams;
+
+bool Filesystem::fileStreamExists (const string& id) {
+    return fileStreams.find(id) != fileStreams.end();
+}
+
+bool Filesystem::execute (const string& function, vector<any>& args) {
+    if (function == "file_open;") {
+        if (args.size() < 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        string& path = any_cast<reference_wrapper<string>&>(b).get();
+        ios_base::openmode open_mode = ios::binary;
+        if (args.size() == 3) {
+            auto& c = args[2];
+            string& mode = any_cast<reference_wrapper<string>&>(c).get();
+            if (mode == "r" || mode == "read") open_mode |= ios::in;
+            else if (mode == "w" || mode == "write") open_mode |= ios::out | ios::trunc;
+            else if (mode == "r/w" || mode == "read/write") open_mode |= ios::in | ios::out | ios::trunc;
+            else {
+                cerr << "Unknown mode for opening file." << endl;
+                exit(1);
+            }
+        } else {
+            open_mode |= ios::in | ios::out | ios::trunc;
+        }
+        if (!filesystem::exists(path)) {
+            std::ofstream(path).close();
+        }
+        auto stream = make_unique<fstream>(path, open_mode);
+        if (!stream->is_open()) {
+            cerr << "Unexpected error while opening file." << endl;
+            exit(1);
+        }
+        fileStreams[id] = move(stream);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "file_close;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        fileStreams.erase(id);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "file_read;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        auto& c = args[2];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        int& bytes = any_cast<reference_wrapper<int>&>(b).get();
+        string& dst = any_cast<reference_wrapper<string>&>(c).get();
+        if (fileStreamExists(id)) {
+            auto& fs = *fileStreams[id];
+            if (fs.good() && !fs.eof()) {
+                dst = string(bytes, '\0');
+                fs.read(dst.data(), bytes);
+                dst.resize(fs.gcount());
+                auto pos = fs.tellg();
+                if (pos != -1) {
+                    fs.seekp(pos);
+                }
+            }
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "file_readline;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        string& dst = any_cast<reference_wrapper<string>&>(b).get();
+        if (fileStreamExists(id)) {
+            auto& fs = *fileStreams[id];
+            if (fs.good() && !fs.eof()) {
+                dst.clear();
+                getline(fs, dst);
+                auto pos = fs.tellg();
+                if (pos != -1) {
+                    fs.seekp(pos);
+                }
+            }
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "file_write;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        string& src = any_cast<reference_wrapper<string>&>(b).get();
+        if (fileStreamExists(id)) {
+            auto& fs = *fileStreams[id];
+            if (fs.good() && !fs.eof()) {
+                fs << src;
+                fs.flush();
+                auto pos = fs.tellp();
+                if (pos != -1) {
+                    fs.seekg(pos);
+                }
+            }
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "file_cursor;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        int& dst = any_cast<reference_wrapper<int>&>(b).get();
+        if (fileStreamExists(id)) {
+            auto& fs = *fileStreams[id];
+            dst = static_cast<int>(fs.tellg());
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "file_move_cursor;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        int& x = any_cast<reference_wrapper<int>&>(b).get();
+        if (fileStreamExists(id)) {
+            auto& fs = *fileStreams[id];
+            auto pos = fs.tellg();
+            if (pos != -1) {
+                fs.seekp(pos+static_cast<streampos>(x));
+                fs.seekg(pos+static_cast<streampos>(x));
+            }
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "file_set_cursor;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        int& x = any_cast<reference_wrapper<int>&>(b).get();
+        if (fileStreamExists(id)) {
+            auto& fs = *fileStreams[id];
+            if (x < 0) {
+                fs.seekg(0, std::ios::end);
+                fs.seekp(0, std::ios::end);
+            } else {
+                fs.seekg(x, std::ios::beg);
+                fs.seekp(x, std::ios::beg);
+            }
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "dir_create;") {
+        if (args.size() < 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "remove;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "path_exists;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "is_file;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "is_dir;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "walk;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "get_cwd;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "set_cwd;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "get_filename;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "get_extension;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
 
         // === END DEFINITION ===
 

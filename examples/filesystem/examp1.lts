@@ -1,0 +1,17 @@
+import filesystem io
+
+start
+	file_open; "file" "sample1.txt"
+	file_write; "file" "Hello_World!"
+	str = ""
+	file_set_cursor; "file" 0
+	file_read; "file" 12 str
+	display; str "\n"
+	n = 0
+	file_cursor; "file" n
+	display; n "\n"
+	file_move_cursor; "file" -n
+	file_readline; "file" str
+	display; str "\n"
+	file_close; "file"
+	$ Should also close automatically

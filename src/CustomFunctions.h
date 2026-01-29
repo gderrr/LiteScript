@@ -2,6 +2,7 @@
 
 #include <any>
 #include <atomic>
+#include <fstream>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -9,6 +10,7 @@
 #include <set>
 #include <string>
 #include <unistd.h>
+#include <unordered_map>
 #include <vector>
 
 #include "Extras.h"
@@ -25,7 +27,7 @@
 // };
 // 
 // .cpp:
-// thread_local TYPE x;
+// thread_local TYPE X::x;
 // ...
 class Function {
 
@@ -108,4 +110,16 @@ class Unix: public Function {
     Unix();
     virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
     ~Unix();
+};
+
+class Filesystem: public Function {
+
+    private:
+
+    static thread_local std::unordered_map<std::string, std::unique_ptr<std::fstream>> fileStreams;
+
+    public:
+
+    virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
+    bool fileStreamExists (const std::string& id);
 };
