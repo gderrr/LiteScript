@@ -1,0 +1,10 @@
+import math io
+
+start
+	min = 0
+	max = 0
+	input; min max
+	x = 0
+	conditional min <= max
+		rand_integer; min max x
+		display; x "\n"
