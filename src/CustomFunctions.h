@@ -13,15 +13,20 @@
 
 #include "Extras.h"
 
-// Polymorphism impl
-
-// (Java)                           (C++)
-// Function f = new Display();      unique_ptr<Function> f = make_unique<Display>();
-// f.execute(...);                  f->execute(...);
-
 // NOTE: given that the DS that holds functions is global, all threads can access it, causing problems to class attributes.
 // So, if an attribute can be thread local to be protected, must put "static thread_local" and define it in .cpp file.
-
+//
+// .h:
+// class X : public Function {
+// ...
+// private:
+// static thread_local TYPE x;
+// ...
+// };
+// 
+// .cpp:
+// thread_local TYPE x;
+// ...
 class Function {
 
     public:
