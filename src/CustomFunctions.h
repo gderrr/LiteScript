@@ -8,6 +8,7 @@
 #include <random>
 #include <set>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 #include "Extras.h"
@@ -17,6 +18,9 @@
 // (Java)                           (C++)
 // Function f = new Display();      unique_ptr<Function> f = make_unique<Display>();
 // f.execute(...);                  f->execute(...);
+
+// NOTE: given that the DS that holds functions is global, all threads can access it, causing problems to class attributes.
+// So, if an attribute can be thread local to be protected, must put "static thread_local" and define it in .cpp file.
 
 class Function {
 
@@ -91,7 +95,7 @@ class Unix: public Function {
 
     private:
 
-    std::map<std::string,void*> memoryChunks;
+    static thread_local std::map<std::string, std::unique_ptr<void, decltype(&free)>> memoryChunks;
     std::vector<std::pair<int,int>> implicitPipes{128};
 
     public:

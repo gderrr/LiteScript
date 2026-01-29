@@ -15,4 +15,5 @@ start
 	str = ""
 	heap_read; "ptr2" 0 str 1
 	display; str "\n"
+	$ heap_free; "ptr2"
 	$ "ptr2" memory chunk should automatically be freed

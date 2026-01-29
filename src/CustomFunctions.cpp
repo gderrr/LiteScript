@@ -942,8 +942,10 @@ bool Math::execute (const string& function, vector<any>& args) {
 }
 
 /////////////////////////////////////
-//   MATH
+//   UNIX
 /////////////////////////////////////
+
+thread_local map<string, unique_ptr<void, decltype(&free)>> Unix::memoryChunks;
 
 Unix::Unix () {
     for (int i = 0; i < implicitPipes.size(); i++) {
@@ -957,9 +959,6 @@ Unix::~Unix () {
         // Close pipes automatically at destruction 
         if (implicitPipes[i].first != -1) close(implicitPipes[i].first);
         if (implicitPipes[i].second != -1) close(implicitPipes[i].second);
-    }
-    for (auto& a : memoryChunks) {
-        free(a.second); // Free all leftover memory allocations automatically at destruction
     }
 }
 
@@ -1098,11 +1097,10 @@ bool Unix::execute (const string& function, vector<any>& args) {
         auto it = memoryChunks.find(id);
         if (it != memoryChunks.end()) {
             // If it already exists, free and reallocate with new chunk
-            free(it->second);
-            it->second = ptr;
+            it->second.reset(ptr);
         }
         else {
-            memoryChunks[id] = ptr;
+            memoryChunks.try_emplace(id, ptr, free);
         }
 
         // === END DEFINITION ===
@@ -1123,13 +1121,13 @@ bool Unix::execute (const string& function, vector<any>& args) {
             if (c.type() == typeid(reference_wrapper<int>)) {
                 int& dst = any_cast<reference_wrapper<int>&>(c).get();
                 int value;
-                memcpy(&value, static_cast<char*>(it->second)+offset, sizeof(int));
+                memcpy(&value, static_cast<char*>(it->second.get())+offset, sizeof(int));
                 dst = value;
             }
             else if (c.type() == typeid(reference_wrapper<float>)) {
                 float& dst = any_cast<reference_wrapper<float>&>(c).get();
                 float value;
-                memcpy(&value, static_cast<char*>(it->second)+offset, sizeof(float));
+                memcpy(&value, static_cast<char*>(it->second.get())+offset, sizeof(float));
                 dst = value;
             }
             else if (c.type() == typeid(reference_wrapper<string>)) {
@@ -1137,7 +1135,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
                 auto& d = args[3];
                 string& dst = any_cast<reference_wrapper<string>&>(c).get();
                 int& bytes = any_cast<reference_wrapper<int>&>(d).get();
-                const char* value = static_cast<char*>(it->second) + offset;
+                const char* value = static_cast<char*>(it->second.get()) + offset;
                 dst = string(value, bytes);
             }
         }
@@ -1160,18 +1158,18 @@ bool Unix::execute (const string& function, vector<any>& args) {
             if (c.type() == typeid(reference_wrapper<int>)) {
                 int& src = any_cast<reference_wrapper<int>&>(c).get();
                 int value = src;
-                memcpy(static_cast<char*>(it->second)+offset, &value, sizeof(int));
+                memcpy(static_cast<char*>(it->second.get())+offset, &value, sizeof(int));
             }
             else if (c.type() == typeid(reference_wrapper<float>)) {
                 float& src = any_cast<reference_wrapper<float>&>(c).get();
                 float value = src;
-                memcpy(static_cast<char*>(it->second)+offset, &value, sizeof(float));
+                memcpy(static_cast<char*>(it->second.get())+offset, &value, sizeof(float));
             }
             else if (c.type() == typeid(reference_wrapper<string>)) {
                 string& src = any_cast<reference_wrapper<string>&>(c).get();
                 // Potentally expensive copy, might rewrite this later
                 string value = src;
-                memcpy(static_cast<char*>(it->second)+offset, src.data(), src.size());
+                memcpy(static_cast<char*>(it->second.get())+offset, src.data(), src.size());
             }
         }
 
@@ -1187,7 +1185,6 @@ bool Unix::execute (const string& function, vector<any>& args) {
         string& id = any_cast<reference_wrapper<string>&>(a).get();
         auto it = memoryChunks.find(id);
         if (it != memoryChunks.end()) {
-            free(it->second);
             memoryChunks.erase(it);
         }
 
