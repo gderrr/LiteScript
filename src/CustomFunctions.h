@@ -9,11 +9,13 @@
 #include <random>
 #include <set>
 #include <string>
+#include <thread>
 #include <unistd.h>
 #include <unordered_map>
 #include <vector>
 
 #include "Extras.h"
+#include "httplib.h"
 
 // NOTE: given that the DS that holds functions is global, all threads can access it, causing problems to class attributes.
 // So, if an attribute can be thread local to be protected, must put "static thread_local" and define it in .cpp file.
@@ -122,4 +124,21 @@ class Filesystem: public Function {
 
     virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
     bool fileStreamExists (const std::string& id);
+};
+
+class Network: public Function {
+
+    private:
+
+    struct HttpServer {
+        httplib::Server server;
+        std::map<std::string, storedInterpret> routes;
+        std::thread thread;
+        int port;
+    };
+    static thread_local std::map<std::string, std::unique_ptr<HttpServer>> httpServers;
+
+    public:
+
+    virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
 };

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <any>
+#include <arpa/inet.h>
 #include <atomic>
 #include <cctype>
 #include <chrono>
@@ -17,10 +18,12 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <netdb.h>
 #include <random>
 #include <set>
 #include <shared_mutex>
 #include <signal.h>
+#include <sstream>
 #include <string>
 #include <sys/wait.h>
 #include <thread>
@@ -28,6 +31,10 @@
 #include <unistd.h>
 #include <unordered_map>
 #include <vector>
+
+#include "Extras.h"
+#include "httplib.h"
+#include "json.hpp"
 
 using namespace std;
 
@@ -54,6 +61,7 @@ vector<unique_ptr<Function>> FunctionFactory::createFunctions (const set<string>
         else if (i == "math") ret.push_back(make_unique<Math>());
         else if (i == "unix") ret.push_back(make_unique<Unix>());
         else if (i == "filesystem") ret.push_back(make_unique<Filesystem>());
+        else if (i == "network") ret.push_back(make_unique<Network>());
 
         else {
             cerr << "Imported module is not a Litescript module: " << i << endl;
@@ -1666,6 +1674,383 @@ bool Filesystem::execute (const string& function, vector<any>& args) {
         string& dst = any_cast<reference_wrapper<string>&>(b).get();
         if (filesystem::is_regular_file(path)) dst = filesystem::path(path).extension().string();
         else dst = "";
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    return false;
+}
+
+/////////////////////////////////////
+//   NETWORK
+/////////////////////////////////////
+
+using json = nlohmann::json;
+thread_local map<string, unique_ptr<Network::HttpServer>> Network::httpServers;
+static const string b64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+map<Key,any> buildRequestContainer (const httplib::Request req) {
+    map<Key,any> ret;
+    ret[Key{string("method")}] = req.method;
+    ret[Key{string("path")}] = req.path;
+    ret[Key{string("version")}] = req.version;
+    ret[Key{string("body")}] = req.body;
+    map<Key,any> hdrs;
+    for (auto& [k, v]: req.headers) {
+        hdrs[Key{string(k)}] = v;
+    }
+    ret[Key{string("headers")}] = hdrs;
+    map<Key,any> prms;
+    for (auto& [k, v]: req.params) {
+        prms[Key{string(k)}] = v;
+    }
+    ret[Key{string("params")}] = prms;
+    return ret;
+}
+
+string key_to_string(const Key& k) {
+    return visit([](auto&& val) -> string {
+        if constexpr (is_same_v<decay_t<decltype(val)>, string>)
+            return val;
+        else
+            return to_string(val);
+    }, k.value);
+}
+
+std::string any_to_string(const std::any& a) {
+    if (a.type() == typeid(int)) return to_string(any_cast<int>(a));
+    if (a.type() == typeid(float)) return to_string(any_cast<float>(a));
+    return any_cast<string>(a);
+}
+
+bool Network::execute (const string& function, vector<any>& args) {
+    if (function == "http_listen;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        int& port = any_cast<reference_wrapper<int>&>(a).get();
+        auto s = make_unique<HttpServer>();
+        s->port = port;
+        httpServers[id] = move(s);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "http_route;") {
+        if (args.size() != 4) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        auto& c = args[2];
+        auto& d = args[3];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        string& method = any_cast<reference_wrapper<string>&>(b).get();
+        string& path = any_cast<reference_wrapper<string>&>(c).get();
+        auto& handler = any_cast<storedInterpret&>(d);
+        auto it = httpServers.find(id);
+        if (it != httpServers.end()) {
+            it->second->routes[method + " " + path] = handler;
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "http_start;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        auto it = httpServers.find(id);
+        if (it != httpServers.end()) {
+            auto& srv = it->second;
+            for (auto& [key, handler] : srv->routes) {
+                auto space = key.find(' ');
+                string method = key.substr(0, space);
+                string path = key.substr(space + 1);
+
+                auto callback = [handler](const httplib::Request& req, httplib::Response& res) {
+                    storedInterpret copy = handler;
+                    map<Key, any> reqCont = buildRequestContainer(req);
+                    copy.args = { reqCont };
+                    any result = copy.runInterpret();
+
+                    int status = 200;
+                    string body;
+                    string content_type = "text/plain";
+                    if (result.has_value()) {
+                        // In the case where we are returning a simple string, handle it as a base case
+                        if (result.type() == typeid(string)) body = any_cast<string>(result);
+                        // Otherwise, only accept LTS containers with a valid response structure
+                        else {
+                            map<Key, any> resCont = any_cast<map<Key,any>>(result);
+                            status = any_cast<int>(resCont.at(Key{string("status")}));
+                            content_type = any_cast<string>(resCont.at(Key{string("content_type")}));
+                            body = any_cast<string>(resCont.at(Key{string("body")}));
+                        }
+                        res.status = status;
+                        res.set_content(body, content_type);
+                    }
+                };
+
+                if (method == "GET") srv->server.Get(path, callback);
+                else if (method == "POST") srv->server.Post(path, callback);
+                else if (method == "PUT") srv->server.Put(path, callback);
+                else if (method == "DELETE") srv->server.Delete(path, callback);
+            }
+
+            srv->thread = thread([srv = srv.get()]() {
+                srv->server.listen("0.0.0.0", srv->port);
+            });
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "http_get;") {
+        if (args.size() < 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        string& url = any_cast<reference_wrapper<string>&>(a).get();
+        string& dst = any_cast<reference_wrapper<string>&>(b).get();
+        httplib::Headers h;
+        if (args.size() == 3) {
+            auto& c = args[2];
+            map<Key,any>& cont = any_cast<reference_wrapper<map<Key,any>>&>(c).get();
+            for (auto& [k,v] : cont) {
+                string key_str = key_to_string(k);
+                string val_str = any_to_string(v);
+                h.insert({ key_str, val_str });
+            }
+        }
+        httplib::Client cli(url.c_str());
+        if (auto res = cli.Get("/", h)) dst = res->body;
+        else dst.clear();
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "http_post;") {
+        if (args.size() < 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        string& url = any_cast<reference_wrapper<string>&>(a).get();
+        string& body = any_cast<reference_wrapper<string>&>(b).get();
+        string contentType = "text/plain";
+        if (args.size() > 2) {
+            auto& c = args[2];
+            string& ct = any_cast<reference_wrapper<string>&>(c).get();
+            contentType = ct;
+        }
+        httplib::Headers h;
+        if (args.size() > 3) {
+            auto& d = args[3];
+            map<Key,any>& cont = any_cast<reference_wrapper<map<Key,any>>&>(d).get();
+            for (auto& [k,v] : cont) {
+                string key_str = key_to_string(k);
+                string val_str = any_to_string(v);
+                h.insert({ key_str, val_str });
+            }
+        }
+        httplib::Client cli(url.c_str());
+        auto res = cli.Post("/", body, contentType);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "http_put;") {
+        if (args.size() < 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        string& url = any_cast<reference_wrapper<string>&>(a).get();
+        string& body = any_cast<reference_wrapper<string>&>(b).get();
+        string contentType = "text/plain";
+        if (args.size() > 2) {
+            auto& c = args[2];
+            string& ct = any_cast<reference_wrapper<string>&>(c).get();
+            contentType = ct;
+        }
+        httplib::Headers h;
+        if (args.size() > 3) {
+            auto& d = args[3];
+            map<Key,any>& cont = any_cast<reference_wrapper<map<Key,any>>&>(d).get();
+            for (auto& [k,v] : cont) {
+                string key_str = key_to_string(k);
+                string val_str = any_to_string(v);
+                h.insert({ key_str, val_str });
+            }
+        }
+        httplib::Client cli(url.c_str());
+        auto res = cli.Put("/", body, contentType);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "http_delete;") {
+        if (args.size() < 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        string& url = any_cast<reference_wrapper<string>&>(a).get();
+        httplib::Headers h;
+        if (args.size() > 1) {
+            auto& b = args[1];
+            map<Key,any>& cont = any_cast<reference_wrapper<map<Key,any>>&>(b).get();
+            for (auto& [k,v] : cont) {
+                string key_str = key_to_string(k);
+                string val_str = any_to_string(v);
+                h.insert({ key_str, val_str });
+            }
+        }
+        httplib::Client cli(url.c_str());
+        auto res = cli.Delete("/", h);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "tcp_listen;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "tcp_accept;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "tcp_send;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "tcp_recv;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "tcp_close;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "udp_send;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "udp_recv;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "dns_resolve;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "local_ip;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "encode_base64;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "decode_base64;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "json_to_container;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "container_to_json;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
 
         // === END DEFINITION ===
 
