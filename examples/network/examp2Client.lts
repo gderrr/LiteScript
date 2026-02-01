@@ -1,0 +1,8 @@
+import network io
+
+start
+	url = "http://localhost:8080"
+	path = "/hello"
+	response = ""
+	http_get; url path response
+	display; response "\n"

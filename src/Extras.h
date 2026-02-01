@@ -6,7 +6,6 @@
 #include <memory>
 #include <any>
 #include <variant>
-#include "CustomFunctions.h"
 #include "mutex_map.h"
 
 // Header for globalVariables so they can be used anywhere

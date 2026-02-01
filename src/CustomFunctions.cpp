@@ -1709,21 +1709,6 @@ map<Key,any> buildRequestContainer (const httplib::Request req) {
     return ret;
 }
 
-string key_to_string(const Key& k) {
-    return visit([](auto&& val) -> string {
-        if constexpr (is_same_v<decay_t<decltype(val)>, string>)
-            return val;
-        else
-            return to_string(val);
-    }, k.value);
-}
-
-std::string any_to_string(const std::any& a) {
-    if (a.type() == typeid(int)) return to_string(any_cast<int>(a));
-    if (a.type() == typeid(float)) return to_string(any_cast<float>(a));
-    return any_cast<string>(a);
-}
-
 bool Network::execute (const string& function, vector<any>& args) {
     if (function == "http_listen;") {
         if (args.size() != 2) IncorrectNumArguments();
@@ -1732,7 +1717,7 @@ bool Network::execute (const string& function, vector<any>& args) {
         auto& a = args[0];
         auto& b = args[1];
         string& id = any_cast<reference_wrapper<string>&>(a).get();
-        int& port = any_cast<reference_wrapper<int>&>(a).get();
+        int& port = any_cast<reference_wrapper<int>&>(b).get();
         auto s = make_unique<HttpServer>();
         s->port = port;
         httpServers[id] = move(s);
@@ -1816,25 +1801,17 @@ bool Network::execute (const string& function, vector<any>& args) {
         return true;
     }
     else if (function == "http_get;") {
-        if (args.size() < 2) IncorrectNumArguments();
+        if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
         auto& a = args[0];
         auto& b = args[1];
+        auto& c = args[2];
         string& url = any_cast<reference_wrapper<string>&>(a).get();
-        string& dst = any_cast<reference_wrapper<string>&>(b).get();
-        httplib::Headers h;
-        if (args.size() == 3) {
-            auto& c = args[2];
-            map<Key,any>& cont = any_cast<reference_wrapper<map<Key,any>>&>(c).get();
-            for (auto& [k,v] : cont) {
-                string key_str = key_to_string(k);
-                string val_str = any_to_string(v);
-                h.insert({ key_str, val_str });
-            }
-        }
+        string& path = any_cast<reference_wrapper<string>&>(b).get();
+        string& dst = any_cast<reference_wrapper<string>&>(c).get();
         httplib::Client cli(url.c_str());
-        if (auto res = cli.Get("/", h)) dst = res->body;
+        if (auto res = cli.Get(path.c_str())) dst = res->body;
         else dst.clear();
 
         // === END DEFINITION ===
@@ -1842,85 +1819,61 @@ bool Network::execute (const string& function, vector<any>& args) {
         return true;
     }
     else if (function == "http_post;") {
-        if (args.size() < 2) IncorrectNumArguments();
+        if (args.size() < 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
         auto& a = args[0];
         auto& b = args[1];
+        auto& c = args[2];
         string& url = any_cast<reference_wrapper<string>&>(a).get();
-        string& body = any_cast<reference_wrapper<string>&>(b).get();
+        string& path = any_cast<reference_wrapper<string>&>(b).get();
+        string& body = any_cast<reference_wrapper<string>&>(c).get();
         string contentType = "text/plain";
-        if (args.size() > 2) {
-            auto& c = args[2];
-            string& ct = any_cast<reference_wrapper<string>&>(c).get();
+        if (args.size() == 4) {
+            auto& d = args[3];
+            string& ct = any_cast<reference_wrapper<string>&>(d).get();
             contentType = ct;
         }
-        httplib::Headers h;
-        if (args.size() > 3) {
-            auto& d = args[3];
-            map<Key,any>& cont = any_cast<reference_wrapper<map<Key,any>>&>(d).get();
-            for (auto& [k,v] : cont) {
-                string key_str = key_to_string(k);
-                string val_str = any_to_string(v);
-                h.insert({ key_str, val_str });
-            }
-        }
         httplib::Client cli(url.c_str());
-        auto res = cli.Post("/", body, contentType);
+        auto res = cli.Post(path.c_str(), body, contentType);
 
         // === END DEFINITION ===
 
         return true;
     }
     else if (function == "http_put;") {
-        if (args.size() < 2) IncorrectNumArguments();
+        if (args.size() < 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
         auto& a = args[0];
         auto& b = args[1];
+        auto& c = args[2];
         string& url = any_cast<reference_wrapper<string>&>(a).get();
-        string& body = any_cast<reference_wrapper<string>&>(b).get();
+        string& path = any_cast<reference_wrapper<string>&>(b).get();
+        string& body = any_cast<reference_wrapper<string>&>(c).get();
         string contentType = "text/plain";
-        if (args.size() > 2) {
-            auto& c = args[2];
-            string& ct = any_cast<reference_wrapper<string>&>(c).get();
+        if (args.size() == 4) {
+            auto& d = args[3];
+            string& ct = any_cast<reference_wrapper<string>&>(d).get();
             contentType = ct;
         }
-        httplib::Headers h;
-        if (args.size() > 3) {
-            auto& d = args[3];
-            map<Key,any>& cont = any_cast<reference_wrapper<map<Key,any>>&>(d).get();
-            for (auto& [k,v] : cont) {
-                string key_str = key_to_string(k);
-                string val_str = any_to_string(v);
-                h.insert({ key_str, val_str });
-            }
-        }
         httplib::Client cli(url.c_str());
-        auto res = cli.Put("/", body, contentType);
+        auto res = cli.Put(path.c_str(), body, contentType);
 
         // === END DEFINITION ===
 
         return true;
     }
     else if (function == "http_delete;") {
-        if (args.size() < 1) IncorrectNumArguments();
+        if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
         auto& a = args[0];
+        auto& b = args[1];
         string& url = any_cast<reference_wrapper<string>&>(a).get();
-        httplib::Headers h;
-        if (args.size() > 1) {
-            auto& b = args[1];
-            map<Key,any>& cont = any_cast<reference_wrapper<map<Key,any>>&>(b).get();
-            for (auto& [k,v] : cont) {
-                string key_str = key_to_string(k);
-                string val_str = any_to_string(v);
-                h.insert({ key_str, val_str });
-            }
-        }
+        string& path = any_cast<reference_wrapper<string>&>(b).get();
         httplib::Client cli(url.c_str());
-        auto res = cli.Delete("/", h);
+        auto res = cli.Delete(path.c_str());
 
         // === END DEFINITION ===
 

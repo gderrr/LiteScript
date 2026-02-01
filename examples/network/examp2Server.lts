@@ -1,0 +1,11 @@
+import network io
+
+handler
+	return "Hello_from_LTS_Server!"
+
+start
+	http_listen; "server" 8080
+	http_route; "server" "GET" "/hello" handler:
+	http_start; "server"
+	loop 1
+		display; "Running...\n"

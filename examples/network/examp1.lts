@@ -1,0 +1,8 @@
+import network io
+
+start
+	url = "httpbin.org"
+	path = "/get"
+	response = ""
+	http_get; url path response
+	display; response "\n"
