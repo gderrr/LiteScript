@@ -1,0 +1,10 @@
+import network io
+
+start
+	tcp_connect; "conn" "127.0.0.1" 12345
+	display; "Connected_to_server!\n"
+	response = ""
+	tcp_recv; "conn" response
+	display; "Server_replied:_" response "\n"
+	tcp_send; "conn" "Hello_server!"
+	tcp_close; "conn"

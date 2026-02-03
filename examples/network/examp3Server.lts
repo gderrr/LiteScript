@@ -1,0 +1,15 @@
+import network io
+
+start
+	tcp_listen; "myserver" "127.0.0.1" 12345
+	display; "Server_listening_on:_127.0.0.1:12345\n"
+	loop 1
+		tcp_accept; "myserver" "conn"
+		display; "Accepted\n"
+		tcp_send; "conn" "Hello_from_server!"
+		str = ""
+		tcp_recv; "conn" str
+		display; "Client_replied:_" str "\n"
+		tcp_close; "conn"
+	tcp_close; "myserver"
+	$ Should also close "myserver" automatically

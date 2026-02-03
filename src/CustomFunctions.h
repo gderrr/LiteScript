@@ -136,7 +136,17 @@ class Network: public Function {
         std::thread thread;
         int port;
     };
+    struct TcpSocket {
+        int fd = -1;
+        bool isListener = false;
+        std::string host;
+        int port = 0;
+    };
+    struct TcpSocketDeleter {
+        void operator() (TcpSocket* sock) const noexcept;
+    };
     static thread_local std::map<std::string, std::unique_ptr<HttpServer>> httpServers;
+    static thread_local std::map<std::string, std::unique_ptr<TcpSocket, TcpSocketDeleter>> tcpSockets;
 
     public:
 

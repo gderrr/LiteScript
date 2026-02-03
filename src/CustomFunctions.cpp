@@ -19,12 +19,15 @@
 #include <memory>
 #include <mutex>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <random>
 #include <set>
 #include <shared_mutex>
 #include <signal.h>
 #include <sstream>
 #include <string>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <thread>
 #include <typeinfo>
@@ -1688,7 +1691,17 @@ bool Filesystem::execute (const string& function, vector<any>& args) {
 
 using json = nlohmann::json;
 thread_local map<string, unique_ptr<Network::HttpServer>> Network::httpServers;
+thread_local map<string, unique_ptr<Network::TcpSocket, Network::TcpSocketDeleter>> Network::tcpSockets;
 static const string b64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+void Network::TcpSocketDeleter::operator() (TcpSocket* sock) const noexcept {
+    if (sock) {
+        if (sock->fd >= 0) {
+            ::close(sock->fd);
+        }
+        delete sock;
+    }
+}
 
 map<Key,any> buildRequestContainer (const httplib::Request req) {
     map<Key,any> ret;
@@ -1883,17 +1896,119 @@ bool Network::execute (const string& function, vector<any>& args) {
         if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        auto& c = args[2];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        string& host = any_cast<reference_wrapper<string>&>(b).get();
+        int& port = any_cast<reference_wrapper<int>&>(c).get();
+        int fd = ::socket(AF_INET, SOCK_STREAM, 0);
+        if (fd < 0) {
+            cerr << "tcp_listen: Socket error." << endl;
+            exit(1);
+        }
+        int opt = 1;
+        setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+        sockaddr_in addr{};
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(port);
+        if (host.empty() || host == "0.0.0.0") {
+            addr.sin_addr.s_addr = INADDR_ANY;
+        }
+        else {
+            inet_pton(AF_INET, host.c_str(), &addr.sin_addr);
+        }
+        if (bind(fd, (sockaddr*)&addr, sizeof(addr)) < 0) {
+            cerr << "tcp_listen: Bind error." << endl;
+            ::close(fd);
+            exit(1);
+        }
+        if (listen(fd, SOMAXCONN) < 0) {
+            cerr << "tcp_listen: Listen error." << endl;
+            ::close(fd);
+            exit(1);
+        }
+        unique_ptr<TcpSocket, TcpSocketDeleter> sock(
+            new TcpSocket(),
+            TcpSocketDeleter{}
+        );
+        sock->fd = fd;
+        sock->isListener = true;
+        sock->host = host;
+        sock->port = port;
+        tcpSockets[id] = move(sock);
 
         // === END DEFINITION ===
 
         return true;
     }
     else if (function == "tcp_accept;") {
-        if (args.size() != 1) IncorrectNumArguments();
+        if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
+        auto& a = args[0];
+        auto& b = args[1];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        string& conn_id = any_cast<reference_wrapper<string>&>(b).get();
+        auto it = tcpSockets.find(id);
+        if (it != tcpSockets.end()) {
+            int listen_fd = it->second->fd;
+            sockaddr_in clientAddr{};
+            socklen_t len = sizeof(clientAddr);
+            int client_fd = ::accept(listen_fd, (sockaddr*)&clientAddr, &len);
+            if (client_fd >= 0) {
+                char ipstr[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, &clientAddr.sin_addr, ipstr, sizeof(ipstr));
+                int client_port = ntohs(clientAddr.sin_port);
 
+                unique_ptr<TcpSocket, TcpSocketDeleter> conn(
+                    new TcpSocket(),
+                    TcpSocketDeleter{}
+                );
+                conn->fd = client_fd;
+                conn->isListener = false;
+                conn->host = ipstr;
+                conn->port = client_port;
+                tcpSockets[conn_id] = move(conn);
+            }
+        }
+ 
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "tcp_connect;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        auto& a = args[0];
+        auto& b = args[1];
+        auto& c = args[2];
+        string& conn_id = any_cast<reference_wrapper<string>&>(a).get();
+        string& host = any_cast<reference_wrapper<string>&>(b).get();
+        int& port = any_cast<reference_wrapper<int>&>(c).get(); 
+        int fd = ::socket(AF_INET, SOCK_STREAM, 0);
+        if (fd < 0) {
+            cerr << "tcp_connect: Socket error." << endl;
+            exit(1);
+        }
+        sockaddr_in addr{};
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(port);
+        inet_pton(AF_INET, host.c_str(), &addr.sin_addr);
+        if (::connect(fd, (sockaddr*)&addr, sizeof(addr)) < 0) {
+            close(fd);
+        } else {
+            unique_ptr<TcpSocket, TcpSocketDeleter> conn(
+                new TcpSocket(),
+                TcpSocketDeleter{}
+            );
+            conn->fd = fd;
+            conn->isListener = false;
+            conn->host = host;
+            conn->port = port;
+            tcpSockets[conn_id] = move(conn);
+        }
 
         // === END DEFINITION ===
 
@@ -1903,7 +2018,25 @@ bool Network::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        string& data = any_cast<reference_wrapper<string>&>(b).get();
+        auto it = tcpSockets.find(id);
+        if (it != tcpSockets.end()) {
+            TcpSocket* sock = it->second.get();
+            if (sock && sock->fd != -1) {
+                size_t totalSent = 0;
+                while (totalSent < data.size()) {
+                    ssize_t sent = ::send(sock->fd, data.data() + totalSent, data.size() - totalSent, 0);
+                    if (sent <= 0) {
+                        // Assume error or closed connection, to return true to signal end of execution.
+                        return true;
+                    }
+                    totalSent += sent;
+                }
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -1913,7 +2046,28 @@ bool Network::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        string& dst = any_cast<reference_wrapper<string>&>(b).get();
+        auto it = tcpSockets.find(id);
+        if (it != tcpSockets.end()) {
+            TcpSocket* sock = it->second.get();
+            if (sock && sock->fd != -1) {
+                dst.clear();
+                char buf[4096];
+                while (true) {
+                    ssize_t n = ::recv(sock->fd, buf, sizeof(buf), 0);
+                    if (n == 0) break;
+                    if (n < 0) {
+                        dst.clear();
+                        break;
+                    }
+                    dst.append(buf, n);
+                    if (n < sizeof(buf)) break;
+                }
+            } 
+        }
 
         // === END DEFINITION ===
 
@@ -1923,7 +2077,10 @@ bool Network::execute (const string& function, vector<any>& args) {
         if (args.size() != 1) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        string& id = any_cast<reference_wrapper<string>&>(a).get();
+        auto it = tcpSockets.find(id);
+        if (it != tcpSockets.end()) tcpSockets.erase(it);
 
         // === END DEFINITION ===
 
