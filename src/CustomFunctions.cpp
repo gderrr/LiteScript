@@ -1722,6 +1722,113 @@ map<Key,any> buildRequestContainer (const httplib::Request req) {
     return ret;
 }
 
+string base64_encode (const string& input) {
+    string out;
+    int val = 0, valb = -6;
+    for (uint8_t c : input) {
+        val = (val << 8) + c;
+        valb += 8;
+        while (valb >= 0) {
+            out.push_back(b64_chars[(val >> valb) & 0x3F]);
+            valb -= 6;
+        }
+    }
+    if (valb > -6) out.push_back(b64_chars[((val << 8) >> (valb + 8)) & 0x3F]);
+    while (out.size() % 4) out.push_back('=');
+    return out;
+}
+
+string base64_decode (const string& input) {
+    vector<int> T(256, -1);
+    for (int i = 0; i < 64; i++) T[b64_chars[i]] = i;
+    string out;
+    int val = 0, valb = -8;
+    for (uint8_t c : input) {
+        if (T[c] == -1) break;
+        val = (val << 6) + T[c];
+        valb += 6;
+        if (valb >= 0) {
+            out.push_back(char((val >> valb) & 0xFF));
+            valb -= 8;
+        }
+    }
+    return out;
+}
+
+any json_to_any (const json& j) {
+    if (j.is_object()) {
+        map<Key, any> obj;
+        for (auto& [k, v] : j.items()) {
+            obj[Key{string(k)}] = json_to_any(v);
+        }
+        return obj;
+    }
+    else if (j.is_array()) {
+        map<Key, any> arr;
+        int i = 0;
+        for (auto& v : j) {
+            arr[Key{int(i++)}] = json_to_any(v);
+        }
+        return arr;
+    }
+    else if (j.is_string()) return j.get<string>();
+    else if (j.is_number_integer()) return j.get<int>();
+    else if (j.is_number_unsigned()) return static_cast<int>(j.get<unsigned int>());
+    else if (j.is_number_float()) return static_cast<float>(j.get<double>());
+    else if (j.is_boolean()) return j.get<bool>() ? string("true") : string("false");
+    else if (j.is_null()) return string("null");
+    else return j.dump();
+}
+
+json any_to_json (const any& a) {
+    if (a.type() == typeid(map<Key, any>)) {
+        map<Key, any> cont = any_cast<map<Key, any>>(a);
+        bool allInt = true;
+        vector<pair<int, const any*>> indexed;
+        for (const auto& [k, v] : cont) {
+            if (holds_alternative<int>(k.value)) {
+                indexed.push_back({get<int>(k.value), &v});
+            } else {
+                allInt = false;
+                break;
+            }
+        }
+        if (allInt) {
+            json arr = json::array();
+            for (auto& [idx, val] : indexed) {
+                arr.push_back(any_to_json(*val));
+            }
+            return arr;
+        }
+        json obj = json::object();
+        for (auto& [k, v] : cont) {
+            if (holds_alternative<string>(k.value)) {
+                obj[get<string>(k.value)] = any_to_json(v);
+            }
+            else if (holds_alternative<int>(k.value)) {
+                obj[to_string(get<int>(k.value))] = any_to_json(v);
+            }
+            else if (holds_alternative<float>(k.value)) {
+                obj[to_string(get<float>(k.value))] = any_to_json(v);
+            }
+            else {
+                obj["?"] = any_to_json(v);
+            }
+        }
+        return obj;
+    }
+    else if (a.type() == typeid(string)) {
+        string val = any_cast<string>(a);
+        if (val == "true") return true;
+        if (val == "false") return false;
+        if (val == "null") return nullptr;
+        return val;
+    }
+    else if (a.type() == typeid(int)) return any_cast<int>(a);
+    else if (a.type() == typeid(float)) return any_cast<float>(a);
+    else return nullptr;
+}
+
 bool Network::execute (const string& function, vector<any>& args) {
     if (function == "http_listen;") {
         if (args.size() != 2) IncorrectNumArguments();
@@ -2206,7 +2313,11 @@ bool Network::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& src = any_cast<reference_wrapper<string>&>(a).get();
+        string& dst = any_cast<reference_wrapper<string>&>(b).get();
+        dst = base64_encode(src);
 
         // === END DEFINITION ===
 
@@ -2216,7 +2327,11 @@ bool Network::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& src = any_cast<reference_wrapper<string>&>(a).get();
+        string& dst = any_cast<reference_wrapper<string>&>(b).get();
+        dst = base64_decode(src);
 
         // === END DEFINITION ===
 
@@ -2226,17 +2341,38 @@ bool Network::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& src = any_cast<reference_wrapper<string>&>(a).get();
+        map<Key,any>& dst = any_cast<reference_wrapper<map<Key,any>>&>(b).get();
+        dst.clear();
+        json j = json::parse(src, nullptr, false);
+        if (!j.is_object()) return true;
+        for (auto& [k, v] : j.items()) {
+            dst[Key{string(k)}] = json_to_any(v);
+        }
 
         // === END DEFINITION ===
 
         return true;
     }
     else if (function == "container_to_json;") {
-        if (args.size() != 2) IncorrectNumArguments();
+        if (args.size() < 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        map<Key,any>& src = any_cast<reference_wrapper<map<Key,any>>&>(a).get();
+        string& dst = any_cast<reference_wrapper<string>&>(b).get();
+        json j = any_to_json(src);
+        if (args.size() == 3) {
+            auto& c = args[2];
+            int& n = any_cast<reference_wrapper<int>&>(c).get();
+            dst = j.dump(n);
+        }
+        else {
+            dst = j.dump();
+        }
 
         // === END DEFINITION ===
 

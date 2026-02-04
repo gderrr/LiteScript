@@ -1,0 +1,38 @@
+import network io
+
+start
+	str = "Hello_World!"
+	display; "Original_string:_" str "\n"
+	res1 = ""
+	encode_base64; str res1
+	$ Should print 'SGVsbG8gV29ybGQh'
+	display; "Encoded_string:_" res1 "\n"
+	res2 = ""
+	decode_base64; res1 res2
+	display; "Decoded_string:_" res2 "\n"
+
+	container c
+	c put "integer" <- 2
+	c put "float" <- 3.14
+	c put "string" <- "hey"
+	container arr
+	arr put 0 <- "a"
+	arr put 1 <- "b"
+	arr put 2 <- "c"
+	c put "array" <- arr
+	container obj
+	obj put "data" <- 12345
+	c put "object" <- obj
+	json = ""
+	container_to_json; c json 2
+	display; json "\n"
+	container c2
+	jsonStr = "{\"object\":{\"data\":1}}"
+	$ Vscode extension v0.1.7 makes the expression look funky, clearly show in stdout what the string is
+	display; jsonStr "\n"
+	json_to_container; jsonStr c2
+	container c3
+	c2 get "object" -> c3
+	dat = 0
+	c3 get "data" -> dat
+	display; dat "\n"
