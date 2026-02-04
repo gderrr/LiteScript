@@ -1,0 +1,6 @@
+import network io
+
+start
+	str = ""
+	udp_recv; "127.0.0.1" 12345 str
+	display; str "\n"

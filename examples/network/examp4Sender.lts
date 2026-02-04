@@ -1,0 +1,4 @@
+import network io
+
+start
+	udp_send; "127.0.0.1" 12345 "Hello_World!"

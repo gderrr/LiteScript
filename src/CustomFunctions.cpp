@@ -2090,7 +2090,21 @@ bool Network::execute (const string& function, vector<any>& args) {
         if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        auto& c = args[2];
+        string& ip = any_cast<reference_wrapper<string>&>(a).get();
+        int& port = any_cast<reference_wrapper<int>&>(b).get();
+        string& data = any_cast<reference_wrapper<string>&>(c).get();
+        int sock = ::socket(AF_INET, SOCK_DGRAM, 0);
+        if (sock >= 0) {
+            sockaddr_in addr{};
+            addr.sin_family = AF_INET;
+            addr.sin_port = htons(port);
+            inet_pton(AF_INET, ip.c_str(), &addr.sin_addr);
+            ::sendto(sock, data.c_str(), data.size(), 0, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+            ::close(sock);
+        }
 
         // === END DEFINITION ===
 
@@ -2100,7 +2114,30 @@ bool Network::execute (const string& function, vector<any>& args) {
         if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        auto& c = args[2];
+        string& ip = any_cast<reference_wrapper<string>&>(a).get();
+        int& port = any_cast<reference_wrapper<int>&>(b).get();
+        string& out = any_cast<reference_wrapper<string>&>(c).get();
+        int sock = ::socket(AF_INET, SOCK_DGRAM, 0);
+        if (sock >= 0) {
+            sockaddr_in addr{};
+            addr.sin_family = AF_INET;
+            addr.sin_port = htons(port);
+            addr.sin_addr.s_addr = INADDR_ANY;
+            if (::bind(sock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+                ::close(sock);
+                return true;
+            }
+            char buf[4096];
+            sockaddr_in sender{};
+            socklen_t len = sizeof(sender);
+            ssize_t n = ::recvfrom(sock, buf, sizeof(buf), 0, reinterpret_cast<sockaddr*>(&sender), &len);
+            if (n > 0) out.assign(buf, n);
+            else out.clear();
+            ::close(sock);
+        }
 
         // === END DEFINITION ===
 
@@ -2110,7 +2147,23 @@ bool Network::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        auto& a = args[0];
+        auto& b = args[1];
+        string& hostname = any_cast<reference_wrapper<string>&>(a).get();
+        string& result = any_cast<reference_wrapper<string>&>(b).get();
+        addrinfo hints{}, *res = nullptr;
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        if (::getaddrinfo(hostname.c_str(), nullptr, &hints, &res) == 0) {
+            sockaddr_in* addr = reinterpret_cast<sockaddr_in*>(res->ai_addr);
+            char ip[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &addr->sin_addr, ip, sizeof(ip));
+            result = ip;
+            ::freeaddrinfo(res);
+        }
+        else {
+            result.clear();
+        }
 
         // === END DEFINITION ===
 
@@ -2120,7 +2173,30 @@ bool Network::execute (const string& function, vector<any>& args) {
         if (args.size() != 1) IncorrectNumArguments();
         // === START DEFINITION ===
 
+        auto& a = args[0];
+        string& result = any_cast<reference_wrapper<string>&>(a).get();
+        int sock = ::socket(AF_INET, SOCK_DGRAM, 0);
+        if (sock < 0) {
+            result = "0.0.0.0";
+            return true;
+        }
 
+        sockaddr_in tmp{};
+        tmp.sin_family = AF_INET;
+        tmp.sin_port = htons(80);
+        inet_pton(AF_INET, "8.8.8.8", &tmp.sin_addr);
+        if (::connect(sock, reinterpret_cast<sockaddr*>(&tmp), sizeof(tmp)) == 0) {
+            sockaddr_in name{};
+            socklen_t len = sizeof(name);
+            ::getsockname(sock, reinterpret_cast<sockaddr*>(&name), &len);
+            char ip[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &name.sin_addr, ip, sizeof(ip));
+            result = ip;
+        }
+        else {
+            result = "0.0.0.0";
+        }
+        ::close(sock);
 
         // === END DEFINITION ===
 

@@ -1,0 +1,12 @@
+import network io
+
+start
+	thisIP = ""
+	local_ip; thisIP
+	display; "Current_ip:_" thisIP "\n"
+	loop 1
+		host = ""
+		input; host
+		addr = ""
+		dns_resolve; host addr
+		display; host "_=>_" addr "\n"

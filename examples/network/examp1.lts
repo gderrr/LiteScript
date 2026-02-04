@@ -1,8 +1,9 @@
 import network io
 
 start
-	url = "httpbin.org"
-	path = "/get"
+	$ This returns your public ip address
+	url = "ident.me"
+	path = "/"
 	response = ""
 	http_get; url path response
 	display; response "\n"
