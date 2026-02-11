@@ -82,6 +82,15 @@ vector<string> split (int& tabCount, const string& line) {
     return words;
 }
 
+void injectUnderscores (string& line) {
+    bool inString = false;
+    for (int i = 0; i < line.size(); i++) {
+        if (line[i] == '\"') inString = !inString;
+        else if (line[i] == ' ' && inString) line[i] = '_';
+        else if (line[i] == '_' && inString) line.insert(i++, "\\");
+    }
+}
+
 vector<string> readClean (const string& filePath) {
     ifstream file(filePath);
 
@@ -94,7 +103,10 @@ vector<string> readClean (const string& filePath) {
     string line;
     while (getline(file, line)) {
         // Removes lines with no relevant text (including comments)
-        if (!isBlankLine(line) && !isComment(line)) readFile.push_back(line);
+        if (!isBlankLine(line) && !isComment(line)) {
+            injectUnderscores(line);
+            readFile.push_back(line);
+        }
     }
     file.close();
 
@@ -653,7 +665,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 0.7.0 2026-2-4" << endl;
+        cout << "lite 0.7.1 2026-2-12" << endl;
         return 0;
     }
 
