@@ -3,11 +3,15 @@
 This project uses the following open-source libraries:
 
 1. [cpp-httplib](https://github.com/yhirose/cpp-httplib) — MIT License  
-   - Copyright (c) 2016-2023 Yuta Yoshioka  
+   - Copyright (c) 2016-2023 Yuta Yoshioka
+   - Files included in this project:
+     - `httplib.h`
    - Purpose: Provides a simple, single-header HTTP/HTTPS client and server for networking features in the interpreter.
 
 2. [nlohmann/json](https://github.com/nlohmann/json) — MIT License  
-   - Copyright (c) 2013-2023 Niels Lohmann  
+   - Copyright (c) 2013-2023 Niels Lohmann
+   - Files included in this project:
+     - `json.hpp`  
    - Purpose: Provides JSON serialization and parsing support for data exchange and configuration.
 
 3. [Dear ImGui](https://github.com/ocornut/imgui) — MIT License  
