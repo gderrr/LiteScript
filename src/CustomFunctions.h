@@ -3,6 +3,8 @@
 #include <any>
 #include <atomic>
 #include <fstream>
+#include "glad/glad.h" // Messes up order, i know; but necessary
+#include <GLFW/glfw3.h>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -16,6 +18,7 @@
 
 #include "Extras.h"
 #include "httplib.h"
+#include "imgui/imgui.h"
 
 // NOTE: given that the DS that holds functions is global, all threads can access it, causing problems to class attributes.
 // So, if an attribute can be thread local to be protected, must put "static thread_local" and define it in .cpp file.
@@ -151,4 +154,42 @@ class Network: public Function {
     public:
 
     virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
+};
+
+class GUI: public Function {
+
+    private:
+
+    struct Widget {
+        enum Type {
+            BUTTON, LABEL, TEXTFIELD, CHECKBOX, SLIDER, PROGRESS, DROPDOWN, IMAGE
+        } type;
+        std::string id;
+        ImVec2 pos, size;
+        std::string text;
+        int min = 0, max = 100;
+        float fvalue = 0.0f;
+        int ivalue = 0;
+        bool bvalue = false;
+        std::vector<std::string> options;
+        storedInterpret callback;
+        GLuint textureID = 0;
+        std::string imagePath;
+    };
+    struct Window {
+        std::string title;
+        ImVec2 pos, size;
+        bool visible = false;
+        bool running = true;
+        GLFWwindow* glfwWindow = nullptr;
+        ImGuiContext* imguiCtx = nullptr;
+        std::vector<Widget> widgets;
+    };
+    std::unordered_map<std::string, Window> windows;
+
+    public:
+
+    GUI();
+    virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
+    ~GUI();
 };

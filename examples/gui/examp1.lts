@@ -1,0 +1,7 @@
+import gui
+
+start
+	make_window; "MyWindow" 0 0 550 200
+	add_label; "MyWindow" "Label" 0 0 48 "Hello World!"
+	show_window; "MyWindow"
+	render_gui; 

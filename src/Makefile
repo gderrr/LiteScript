@@ -1,24 +1,59 @@
 CXX = g++
+CC  = gcc
 
+# -------------------------
+# Compiler flags
+# -------------------------
 CXXFLAGS ?= -O2 -std=c++17
-LDFLAGS ?= -lglfw -lGL -ldl -lpthread
-ifeq ($(ASan),1)
-CXXFLAGS += -fsanitize=address
-endif
+CFLAGS   ?= -O2
 
+# Uncomment to enable AddressSanitizer
+# CXXFLAGS += -fsanitize=address
+# CFLAGS   += -fsanitize=address
+# LDFLAGS  += -fsanitize=address
+
+# -------------------------
+# Linker flags (system libs)
+# -------------------------
+LDFLAGS  ?= -lglfw -lGL -ldl -lpthread
+
+# -------------------------
+# Target
+# -------------------------
 TARGET = lite
-SRCS = main.cpp CustomFunctions.cpp Evaluator.cpp Extras.cpp \
-       imgui/imgui.cpp imgui/imgui_tables.cpp imgui/imgui_widgets.cpp imgui/imgui_draw.cpp \
-	   imgui/imgui_impl_glfw.cpp imgui/imgui_impl_opengl3.cpp
-OBJS = $(SRCS:.cpp=.o)
 
+# -------------------------
+# Source files
+# -------------------------
+SRCS_CPP = main.cpp CustomFunctions.cpp Evaluator.cpp Extras.cpp \
+           imgui/imgui.cpp imgui/imgui_draw.cpp imgui/imgui_widgets.cpp imgui/imgui_tables.cpp \
+           imgui/imgui_impl_glfw.cpp imgui/imgui_impl_opengl3.cpp
+
+SRCS_C   = glad/glad.c
+
+# -------------------------
+# Object files
+# -------------------------
+OBJS_CPP = $(SRCS_CPP:.cpp=.o)
+OBJS_C   = $(SRCS_C:.c=.o)
+OBJS     = $(OBJS_CPP) $(OBJS_C)
+
+# -------------------------
+# Build target
+# -------------------------
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJS) $(LDFLAGS)
+	$(CXX) -o $@ $(OBJS) $(LDFLAGS)
 
+# Compile C++ sources
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# Compile C sources
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Clean
 clean:
-	rm -rf $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(TARGET)

@@ -14,6 +14,8 @@
 #include <filesystem>
 #include <functional>
 #include <fstream>
+#include <GLFW/glfw3.h>
+#include <GL/gl.h>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -38,12 +40,20 @@
 #include "Extras.h"
 #include "httplib.h"
 #include "json.hpp"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
 
 using namespace std;
 
 void IncorrectNumArguments () {
     cerr << "Incorrect number of arguments for imported function." << endl;
     exit(1); 
+}
+
+// Helper to elminate boilerplate in argument retrieval
+template <typename T> T& ref_get (any& a) {
+    return any_cast<reference_wrapper<T>&>(a).get();
 }
 
 FunctionFactory::FunctionFactory () {}
@@ -65,6 +75,7 @@ vector<unique_ptr<Function>> FunctionFactory::createFunctions (const set<string>
         else if (i == "unix") ret.push_back(make_unique<Unix>());
         else if (i == "filesystem") ret.push_back(make_unique<Filesystem>());
         else if (i == "network") ret.push_back(make_unique<Network>());
+        else if (i == "gui") ret.push_back(make_unique<GUI>());
 
         else {
             cerr << "Imported module is not a LiteScript module: " << i << endl;
@@ -1013,7 +1024,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "get_pid;") {
         if (args.size() != 1) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         auto& a = args[0];
         int& ret = any_cast<reference_wrapper<int>&>(a).get();
@@ -1025,7 +1036,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "get_ppid;") {
         if (args.size() != 1) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         auto& a = args[0];
         int& ret = any_cast<reference_wrapper<int>&>(a).get();
@@ -1037,7 +1048,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "waitpid;") {
         if (args.size() < 1) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         auto& a = args[0];
         int& pid = any_cast<reference_wrapper<int>&>(a).get();
@@ -1054,7 +1065,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "kill;") {
         if (args.size() != 2) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         auto& a = args[0];
         auto& b = args[1];
@@ -1068,7 +1079,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "sleep;") {
         if (args.size() != 1) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         auto& a = args[0];
         int& x = any_cast<reference_wrapper<int>&>(a).get();
@@ -1080,7 +1091,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "time;") {
         if (args.size() < 1) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         uint64_t t = static_cast<uint64_t>(time(nullptr));
         uint32_t low  = static_cast<uint32_t>(t & 0xFFFFFFFFULL);
@@ -1100,7 +1111,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "heap_allocate;") {
         if (args.size() != 2) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         auto& a = args[0];
         auto& b = args[1];
@@ -1122,7 +1133,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "heap_read;") {
         if (args.size() < 3) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         auto& a = args[0];
         auto& b = args[1];
@@ -1159,7 +1170,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "heap_write;") {
         if (args.size() != 3) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         auto& a = args[0];
         auto& b = args[1];
@@ -1192,7 +1203,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "heap_free;") {
         if (args.size() != 1) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         auto& a = args[0];
         string& id = any_cast<reference_wrapper<string>&>(a).get();
@@ -1207,7 +1218,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "pipe_open;") {
         if (args.size() != 1) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         auto& a = args[0];
         int& idx = any_cast<reference_wrapper<int>&>(a).get();
@@ -1225,7 +1236,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "pipe_read;") {
         if (args.size() < 2) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         auto& a = args[0];
         auto& b = args[1];
@@ -1258,7 +1269,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "pipe_write;") {
         if (args.size() != 2) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         auto& a = args[0];
         auto& b = args[1];
@@ -1284,7 +1295,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "pipe_close_read;") {
         if (args.size() != 1) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         auto& a = args[0];
         int& idx = any_cast<reference_wrapper<int>&>(a).get();
@@ -1299,7 +1310,7 @@ bool Unix::execute (const string& function, vector<any>& args) {
     }
     else if (function == "pipe_close_write;") {
         if (args.size() != 1) IncorrectNumArguments();
-        // === START DEFINTION ===
+        // === START DEFINITION ===
 
         auto& a = args[0];
         int& idx = any_cast<reference_wrapper<int>&>(a).get();
@@ -2373,6 +2384,582 @@ bool Network::execute (const string& function, vector<any>& args) {
         else {
             dst = j.dump();
         }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    return false;
+}
+
+/////////////////////////////////////
+//   GUI
+/////////////////////////////////////
+
+const float REFERENCE_FONT_SIZE = 9.0f; // Empirically determined constant to align with Google Docs Standards
+
+GUI::GUI () {
+    // === GLFW Init ===
+    if (!glfwInit()) {
+        cerr << "gui: Failed to initialize GLFW" << endl;
+        exit(1);
+    }
+}
+
+GUI::~GUI () {
+    for (auto& [_, win] : windows) {
+        if (win.glfwWindow) {
+            ImGui::SetCurrentContext(win.imguiCtx);
+            ImGui_ImplOpenGL3_Shutdown();
+            ImGui_ImplGlfw_Shutdown();
+            ImGui::DestroyContext(win.imguiCtx);
+            win.imguiCtx = nullptr;
+            glfwDestroyWindow(win.glfwWindow);
+            win.glfwWindow = nullptr;
+        }
+    }
+    glfwTerminate();
+}
+
+bool GUI::execute (const string& function, vector<any>& args) {
+    if (function == "make_window;") {
+        if (args.size() != 5) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        string& title = ref_get<string>(args[0]);
+        int& x = ref_get<int>(args[1]);
+        int& y = ref_get<int>(args[2]);
+        int& w = ref_get<int>(args[3]);
+        int& h = ref_get<int>(args[4]);
+        
+        Window win;
+        win.title = title;
+        win.pos = ImVec2((float)x, (float)y);
+        win.size = ImVec2((float)w, (float)h);
+        win.visible = false;
+        windows[title] = win;
+
+        // === END DEFINITION ===
+        return true;
+    }
+    else if (function == "add_button;") {
+        if (args.size() != 6) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        string& winTitle = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        int& x = ref_get<int>(args[2]);
+        int& y = ref_get<int>(args[3]);
+        int& w = ref_get<int>(args[4]);
+        int& h = ref_get<int>(args[5]);
+        storedInterpret& func = any_cast<storedInterpret&>(args[6]);
+
+        Widget wdg;
+        wdg.type = Widget::BUTTON;
+        wdg.id = label;
+        wdg.pos = ImVec2((float)x, (float)y);
+        wdg.size = ImVec2((float)w, (float)h);
+        wdg.callback = func;
+        windows[winTitle].widgets.push_back(wdg);
+
+        // === END DEFINITION ===
+        return true;
+    }
+    else if (function == "add_label;") {
+        if (args.size() < 5) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        string& winTitle = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        int& x = ref_get<int>(args[2]);
+        int& y = ref_get<int>(args[3]);
+        int& fontSize = ref_get<int>(args[4]);
+        string text = (args.size() == 6) ? ref_get<string>(args[5]) : "";
+
+        Widget wdg;
+        wdg.type = Widget::LABEL;
+        wdg.id = label;
+        wdg.pos = ImVec2((float)x, (float)y);
+        wdg.size = ImVec2((float)fontSize, 0.0f);
+        wdg.text = text;
+        windows[winTitle].widgets.push_back(wdg);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "add_textfield;") {
+        if (args.size() < 6) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        string& winTitle = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        int& x = ref_get<int>(args[2]);
+        int& y = ref_get<int>(args[3]);
+        int& w = ref_get<int>(args[4]);
+        int& h = ref_get<int>(args[5]);
+        string text = (args.size() == 7) ? ref_get<string>(args[6]) : "";
+
+        Widget wdg;
+        wdg.type = Widget::TEXTFIELD;
+        wdg.id = label;
+        wdg.pos = ImVec2((float)x, (float)y);
+        wdg.size = ImVec2((float)w, (float)h);
+        wdg.text = text;
+        windows[winTitle].widgets.push_back(wdg);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "add_checkbox;") {
+        if (args.size() < 6) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        string& winTitle = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        int& x = ref_get<int>(args[2]);
+        int& y = ref_get<int>(args[3]);
+        int& w = ref_get<int>(args[4]);
+        int& h = ref_get<int>(args[5]);
+        string text = (args.size() == 7) ? ref_get<string>(args[6]) : "";
+
+        Widget wdg;
+        wdg.type = Widget::CHECKBOX;
+        wdg.id = label;
+        wdg.pos = ImVec2((float)x, (float)y);
+        wdg.size = ImVec2((float)w, (float)h);
+        wdg.text = text;
+        wdg.bvalue = false;
+        windows[winTitle].widgets.push_back(wdg);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "add_slider;") {
+        if (args.size() < 8) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        string& winTitle = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        int& x = ref_get<int>(args[2]);
+        int& y = ref_get<int>(args[3]);
+        int& w = ref_get<int>(args[4]);
+        int& h = ref_get<int>(args[5]);
+        int& min = ref_get<int>(args[6]);
+        int& max = ref_get<int>(args[7]);
+        int def = (args.size() == 9) ? ref_get<int>(args[8]) : min;
+
+        Widget wdg;
+        wdg.type = Widget::SLIDER;
+        wdg.id = label;
+        wdg.pos = ImVec2((float)x, (float)y);
+        wdg.size = ImVec2((float)w, (float)h);
+        wdg.max = max;
+        wdg.min = min;
+        wdg.ivalue = def;
+        windows[winTitle].widgets.push_back(wdg);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "add_progress_bar;") {
+        if (args.size() < 6) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        string& winTitle = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        int& x = ref_get<int>(args[2]);
+        int& y = ref_get<int>(args[3]);
+        int& w = ref_get<int>(args[4]);
+        int& h = ref_get<int>(args[5]);
+        float def = (args.size() == 7) ? ref_get<float>(args[6]) : 0.0f;
+
+        Widget wdg;
+        wdg.type = Widget::PROGRESS;
+        wdg.id = label;
+        wdg.pos = ImVec2((float)x, (float)y);
+        wdg.size = ImVec2((float)w, (float)h);
+        wdg.fvalue = def;
+        windows[winTitle].widgets.push_back(wdg);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "add_dropdown;") {
+        if (args.size() != 7) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        string& winTitle = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        int& x = ref_get<int>(args[2]);
+        int& y = ref_get<int>(args[3]);
+        int& w = ref_get<int>(args[4]);
+        int& h = ref_get<int>(args[5]);
+        map<Key,any>& opt = ref_get<map<Key,any>>(args[6]);
+
+        Widget wdg;
+        wdg.type = Widget::DROPDOWN;
+        wdg.id = label;
+        wdg.pos = ImVec2((float)x, (float)y);
+        wdg.size = ImVec2((float)w, (float)h);
+        wdg.options.clear();
+        for (auto& [k, v] : opt) {
+            wdg.options.push_back(any_cast<string>(v)); // Change it to a set later for ordering
+        }
+        wdg.text = wdg.options.empty() ? "" : wdg.options[0];
+        windows[winTitle].widgets.push_back(wdg);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "add_image;") {
+        if (args.size() != 7) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        string& winTitle = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        int& x = ref_get<int>(args[2]);
+        int& y = ref_get<int>(args[3]);
+        int& w = ref_get<int>(args[4]);
+        int& h = ref_get<int>(args[5]);
+        string& path = ref_get<string>(args[6]);
+
+        Widget wdg;
+        wdg.type = Widget::IMAGE;
+        wdg.id = label;
+        wdg.pos = ImVec2((float)x, (float)y);
+        wdg.size = ImVec2((float)w, (float)h);
+        wdg.imagePath = path;
+        windows[winTitle].widgets.push_back(wdg);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "show_window;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        string& title = ref_get<string>(args[0]);
+        auto& win = windows[title];
+        if (!win.glfwWindow) {
+            glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+            win.glfwWindow = glfwCreateWindow((int)win.size.x, (int)win.size.y, win.title.c_str(), nullptr, nullptr);
+            if (!win.glfwWindow) {
+                cerr << "gui: Failed to create GLFW window" << endl;
+                exit(1);
+            }
+            glfwSetWindowPos(win.glfwWindow, (int)win.pos.x, (int)win.pos.y);
+            glfwMakeContextCurrent(win.glfwWindow);
+            if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+                cerr << "gui: Failed to initialize GLAD." << endl;
+                exit(1);
+            }
+            win.imguiCtx = ImGui::CreateContext();
+            ImGui::SetCurrentContext(win.imguiCtx);
+            ImGuiIO& io = ImGui::GetIO();
+            io.IniFilename = nullptr;
+            ImGui_ImplGlfw_InitForOpenGL(win.glfwWindow, true);
+            ImGui_ImplOpenGL3_Init("#version 330");
+        }
+        else {
+            glfwShowWindow(win.glfwWindow);
+            glfwMakeContextCurrent(win.glfwWindow);
+            ImGui::SetCurrentContext(win.imguiCtx);
+        }
+        win.visible = true;
+        win.running = true;
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "close_window;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        string& title = ref_get<string>(args[0]);
+        auto it = windows.find(title);
+        if (it != windows.end()) {
+            Window& win = it->second;
+            if (win.glfwWindow) {
+                glfwDestroyWindow(win.glfwWindow);
+                win.glfwWindow = nullptr;
+            }
+            if (win.imguiCtx) {
+                ImGui::DestroyContext(win.imguiCtx);
+                win.imguiCtx = nullptr;
+            }
+            win.visible = false;
+            win.running = false;
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "visible_window;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        string& title = ref_get<string>(args[0]);
+        int& dst = ref_get<int>(args[1]);
+        auto it = windows.find(title);
+        if (it != windows.end()) {
+            dst = it->second.visible;
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "set_label;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "get_textfield;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "set_textfield;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "get_checkbox;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "set_checkbox;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "clear_checkbox;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "toggle_checkbox;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "get_slider;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "set_slider;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "get_progress_bar;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "set_progress_bar;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "get_dropdown;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "set_dropdown;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "change_image;") {
+        if (args.size() != 3) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "render_gui;") {
+        
+        // === START DEFINITION ===
+
+        bool anyRunning = true;
+        while (anyRunning) {
+            glfwPollEvents();
+            anyRunning = false;
+            for (auto& [_, win] : windows) {
+                if (!win.visible || !win.glfwWindow) continue;
+                if (glfwWindowShouldClose(win.glfwWindow)) {
+                    win.running = false;
+                    win.visible = false;
+                    glfwDestroyWindow(win.glfwWindow);
+                    win.glfwWindow = nullptr;
+                    continue;
+                }
+                anyRunning = anyRunning || win.running;
+                glfwMakeContextCurrent(win.glfwWindow);
+                ImGui::SetCurrentContext(win.imguiCtx);
+                ImGui_ImplOpenGL3_NewFrame();
+                ImGui_ImplGlfw_NewFrame();
+                ImGui::NewFrame();
+                ImGui::Begin("##root", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground | 
+                ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings | 
+                ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+                for (auto& w : win.widgets) {
+                    switch (w.type) {
+                        case Widget::LABEL:
+                            ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
+                            ImGui::SetWindowFontScale(w.size.x / REFERENCE_FONT_SIZE);
+                            ImGui::Text("%s", w.text.c_str());
+                            ImGui::SetWindowFontScale(1.0f);
+                            break;
+                        case Widget::BUTTON:
+                            ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
+                            if (ImGui::Button(w.text.c_str(), w.size))
+                                w.callback.runInterpret();
+                            break;
+                        case Widget::TEXTFIELD:
+                            char buffer[256];
+                            strncpy(buffer, w.text.c_str(), sizeof(buffer));
+                            buffer[sizeof(buffer)-1] = 0;
+                            ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
+                            if (ImGui::InputText(w.id.c_str(), buffer, sizeof(buffer)))
+                                w.text = string(buffer);
+                            break;
+                        case Widget::CHECKBOX:
+                            ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
+                            ImGui::Checkbox(w.text.c_str(), &w.bvalue);
+                            break;
+                        case Widget::SLIDER:
+                            ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
+                            ImGui::SliderInt(w.id.c_str(), &w.ivalue, w.min, w.max);
+                            break;
+                        case Widget::PROGRESS:
+                            ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));  
+                            ImGui::ProgressBar(w.fvalue, w.size);
+                            break;
+                        case Widget::DROPDOWN:
+                            ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
+                            if (ImGui::BeginCombo(w.id.c_str(), w.text.c_str())) {
+                                for (auto& opt : w.options) {
+                                    bool selected = (w.text == opt);
+                                    if (ImGui::Selectable(opt.c_str(), selected))
+                                        w.text = opt;
+                                    if (selected) ImGui::SetItemDefaultFocus();
+                                }
+                                ImGui::EndCombo();
+                            }
+                            break;
+                        case Widget::IMAGE:
+                            ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
+                            if (w.textureID)
+                                ImGui::Image((void*)(intptr_t)w.textureID, w.size);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                ImGui::End();
+                ImGui::Render();
+                int display_w, display_h;
+                glfwGetFramebufferSize(win.glfwWindow, &display_w, &display_h);
+                glViewport(0, 0, display_w, display_h);
+                glClearColor(0.1f, 0.1f, 0.1f, 0.1f);
+                glClear(GL_COLOR_BUFFER_BIT);
+                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+                glfwSwapBuffers(win.glfwWindow);
+            }
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "play_sound;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+
 
         // === END DEFINITION ===
 

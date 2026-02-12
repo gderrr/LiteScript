@@ -20,3 +20,12 @@ This project uses the following open-source libraries:
      - `imconfig.h` is required by ImGui but can be empty.  
      - Backends are configured for GLFW + OpenGL3.  
      - To update, replace the above files with the latest versions from the ImGui repository and ensure `imconfig.h` exists.
+
+4. [GLAD](https://github.com/Dav1dde/glad) — MIT License  
+   - Copyright (c) 2015-2023 David Herberth  
+   - Files included in this project:
+     - `glad.c`, `glad.h`, `khrplatform.h`  
+   - Purpose: Provides OpenGL function loading for cross-platform support, used by the OpenGL backend of ImGui.
+   - Notes:
+     - Ensure `glad.h` is included **before** any system OpenGL headers (e.g., `<GL/gl.h>`).  
+     - Can be updated by downloading the latest version from the GLAD web service or GitHub repository.
