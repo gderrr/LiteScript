@@ -7,15 +7,15 @@ CC  = gcc
 CXXFLAGS ?= -O2 -std=c++17
 CFLAGS   ?= -O2
 
-# Uncomment to enable AddressSanitizer
-# CXXFLAGS += -fsanitize=address
-# CFLAGS   += -fsanitize=address
-# LDFLAGS  += -fsanitize=address
-
 # -------------------------
 # Linker flags (system libs)
 # -------------------------
 LDFLAGS  ?= -lglfw -lGL -ldl -lpthread
+
+# Uncomment to enable AddressSanitizer
+#CXXFLAGS += -fsanitize=address
+#CFLAGS   += -fsanitize=address
+#LDFLAGS  += -fsanitize=address
 
 # -------------------------
 # Target

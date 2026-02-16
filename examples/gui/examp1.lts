@@ -1,7 +1,25 @@
-import gui
+import gui io
+
+handler
+	close_window; "MyWindow"
 
 start
-	make_window; "MyWindow" 0 0 550 200
-	add_label; "MyWindow" "Label" 0 0 48 "Hello World!"
-	show_window; "MyWindow"
+	make_window; "MyWindow" 0 0 800 800
+
+	x1 = 100
+	x2 = 500
+	yoff = 100
+
+	add_label; "MyWindow" "Label" x1 yoff+0 12 "Hello World!"
+	add_button; "MyWindow" "Close" x1 yoff+200 50 30 handler:
+	add_textfield; "MyWindow" "TextField" x1 yoff+400 100 "Placeholder"
+	add_checkbox; "MyWindow" "Checkbox" x1 yoff+600 5 5
+	add_slider; "MyWindow" "Slider" x2 yoff+0 100 0 100 50
+	add_progress_bar; "MyWindow" "ProgressBar" x2 yoff+200 40 20 0.5
+	container c
+	c put 0 <- "Hello"
+	c put 1 <- "World"
+	add_dropdown; "MyWindow" "Dropdown" x2 yoff+400 100 c
+
+	add_window; "MyWindow"
 	render_gui; 

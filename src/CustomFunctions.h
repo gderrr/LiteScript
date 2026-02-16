@@ -181,6 +181,7 @@ class GUI: public Function {
         ImVec2 pos, size;
         bool visible = false;
         bool running = true;
+        bool closing = false;
         GLFWwindow* glfwWindow = nullptr;
         ImGuiContext* imguiCtx = nullptr;
         std::vector<Widget> widgets;

@@ -2406,18 +2406,54 @@ GUI::GUI () {
     }
 }
 
-GUI::~GUI () {
-    for (auto& [_, win] : windows) {
+GUI::~GUI() {
+    // Optional: make sure no other thread is touching GLFW/ImGui here.
+
+    // If you track initialization per-window, prefer that flag.
+    for (auto it = windows.begin(); it != windows.end();) {
+        Window &win = it->second;
+
+        // If both are nullptr, skip and erase to avoid future accidental use
+        if (!win.glfwWindow && !win.imguiCtx) {
+            it = windows.erase(it);
+            continue;
+        }
+
+        // If we still have a valid GLFW window, make its context current.
         if (win.glfwWindow) {
+            // Safety: if making current fails nothing else should be called
+            glfwMakeContextCurrent(win.glfwWindow);
+        }
+
+        // If we have an ImGui context associated with this window, set it current.
+        if (win.imguiCtx) {
             ImGui::SetCurrentContext(win.imguiCtx);
+
+            // Only call backend shutdown if you previously initialized them for this context.
+            // If you don't track that, call them guardedly (they expect a valid context).
+            // Wrap in try/catch to avoid exceptions propagating (C backends shouldn't throw).
             ImGui_ImplOpenGL3_Shutdown();
             ImGui_ImplGlfw_Shutdown();
+
             ImGui::DestroyContext(win.imguiCtx);
             win.imguiCtx = nullptr;
+
+            // After destroying an ImGui context, make sure no ImGui context is left current.
+            ImGui::SetCurrentContext(nullptr);
+        }
+
+        // Destroy GLFW window if it exists
+        if (win.glfwWindow) {
             glfwDestroyWindow(win.glfwWindow);
             win.glfwWindow = nullptr;
         }
+
+        // erase the entry so later code cannot touch it
+        it = windows.erase(it);
     }
+
+    // Finally ensure no context is current and terminate GLFW once.
+    glfwMakeContextCurrent(nullptr);
     glfwTerminate();
 }
 
@@ -2443,7 +2479,7 @@ bool GUI::execute (const string& function, vector<any>& args) {
         return true;
     }
     else if (function == "add_button;") {
-        if (args.size() != 6) IncorrectNumArguments();
+        if (args.size() != 7) IncorrectNumArguments();
         // === START DEFINITION ===
 
         string& winTitle = ref_get<string>(args[0]);
@@ -2497,14 +2533,13 @@ bool GUI::execute (const string& function, vector<any>& args) {
         int& x = ref_get<int>(args[2]);
         int& y = ref_get<int>(args[3]);
         int& w = ref_get<int>(args[4]);
-        int& h = ref_get<int>(args[5]);
-        string text = (args.size() == 7) ? ref_get<string>(args[6]) : "";
+        string text = (args.size() == 6) ? ref_get<string>(args[5]) : "Enter text...";
 
         Widget wdg;
         wdg.type = Widget::TEXTFIELD;
-        wdg.id = label;
+        wdg.id = "##" + label;
         wdg.pos = ImVec2((float)x, (float)y);
-        wdg.size = ImVec2((float)w, (float)h);
+        wdg.size = ImVec2((float)w, 0.0f);
         wdg.text = text;
         windows[winTitle].widgets.push_back(wdg);
 
@@ -2513,7 +2548,7 @@ bool GUI::execute (const string& function, vector<any>& args) {
         return true;
     }
     else if (function == "add_checkbox;") {
-        if (args.size() < 6) IncorrectNumArguments();
+        if (args.size() != 6) IncorrectNumArguments();
         // === START DEFINITION ===
 
         string& winTitle = ref_get<string>(args[0]);
@@ -2522,14 +2557,12 @@ bool GUI::execute (const string& function, vector<any>& args) {
         int& y = ref_get<int>(args[3]);
         int& w = ref_get<int>(args[4]);
         int& h = ref_get<int>(args[5]);
-        string text = (args.size() == 7) ? ref_get<string>(args[6]) : "";
 
         Widget wdg;
         wdg.type = Widget::CHECKBOX;
-        wdg.id = label;
+        wdg.id = "##" + label;
         wdg.pos = ImVec2((float)x, (float)y);
         wdg.size = ImVec2((float)w, (float)h);
-        wdg.text = text;
         wdg.bvalue = false;
         windows[winTitle].widgets.push_back(wdg);
 
@@ -2538,7 +2571,7 @@ bool GUI::execute (const string& function, vector<any>& args) {
         return true;
     }
     else if (function == "add_slider;") {
-        if (args.size() < 8) IncorrectNumArguments();
+        if (args.size() < 7) IncorrectNumArguments();
         // === START DEFINITION ===
 
         string& winTitle = ref_get<string>(args[0]);
@@ -2546,16 +2579,15 @@ bool GUI::execute (const string& function, vector<any>& args) {
         int& x = ref_get<int>(args[2]);
         int& y = ref_get<int>(args[3]);
         int& w = ref_get<int>(args[4]);
-        int& h = ref_get<int>(args[5]);
-        int& min = ref_get<int>(args[6]);
-        int& max = ref_get<int>(args[7]);
-        int def = (args.size() == 9) ? ref_get<int>(args[8]) : min;
+        int& min = ref_get<int>(args[5]);
+        int& max = ref_get<int>(args[6]);
+        int def = (args.size() == 8) ? ref_get<int>(args[7]) : min;
 
         Widget wdg;
         wdg.type = Widget::SLIDER;
-        wdg.id = label;
+        wdg.id = "##" + label;
         wdg.pos = ImVec2((float)x, (float)y);
-        wdg.size = ImVec2((float)w, (float)h);
+        wdg.size = ImVec2((float)w, 0.0f);
         wdg.max = max;
         wdg.min = min;
         wdg.ivalue = def;
@@ -2590,7 +2622,7 @@ bool GUI::execute (const string& function, vector<any>& args) {
         return true;
     }
     else if (function == "add_dropdown;") {
-        if (args.size() != 7) IncorrectNumArguments();
+        if (args.size() != 6) IncorrectNumArguments();
         // === START DEFINITION ===
 
         string& winTitle = ref_get<string>(args[0]);
@@ -2598,14 +2630,13 @@ bool GUI::execute (const string& function, vector<any>& args) {
         int& x = ref_get<int>(args[2]);
         int& y = ref_get<int>(args[3]);
         int& w = ref_get<int>(args[4]);
-        int& h = ref_get<int>(args[5]);
-        map<Key,any>& opt = ref_get<map<Key,any>>(args[6]);
+        map<Key,any>& opt = ref_get<map<Key,any>>(args[5]);
 
         Widget wdg;
         wdg.type = Widget::DROPDOWN;
-        wdg.id = label;
+        wdg.id = "##" + label;
         wdg.pos = ImVec2((float)x, (float)y);
-        wdg.size = ImVec2((float)w, (float)h);
+        wdg.size = ImVec2((float)w, 0.0f);
         wdg.options.clear();
         for (auto& [k, v] : opt) {
             wdg.options.push_back(any_cast<string>(v)); // Change it to a set later for ordering
@@ -2641,7 +2672,7 @@ bool GUI::execute (const string& function, vector<any>& args) {
 
         return true;
     }
-    else if (function == "show_window;") {
+    else if (function == "add_window;") {
         if (args.size() != 1) IncorrectNumArguments();
         // === START DEFINITION ===
 
@@ -2687,16 +2718,8 @@ bool GUI::execute (const string& function, vector<any>& args) {
         auto it = windows.find(title);
         if (it != windows.end()) {
             Window& win = it->second;
-            if (win.glfwWindow) {
-                glfwDestroyWindow(win.glfwWindow);
-                win.glfwWindow = nullptr;
-            }
-            if (win.imguiCtx) {
-                ImGui::DestroyContext(win.imguiCtx);
-                win.imguiCtx = nullptr;
-            }
+            win.closing = true;
             win.visible = false;
-            win.running = false;
         }
 
         // === END DEFINITION ===
@@ -2867,12 +2890,12 @@ bool GUI::execute (const string& function, vector<any>& args) {
             glfwPollEvents();
             anyRunning = false;
             for (auto& [_, win] : windows) {
+                if (win.closing) continue;
                 if (!win.visible || !win.glfwWindow) continue;
                 if (glfwWindowShouldClose(win.glfwWindow)) {
                     win.running = false;
                     win.visible = false;
-                    glfwDestroyWindow(win.glfwWindow);
-                    win.glfwWindow = nullptr;
+                    win.closing = true;
                     continue;
                 }
                 anyRunning = anyRunning || win.running;
@@ -2881,10 +2904,14 @@ bool GUI::execute (const string& function, vector<any>& args) {
                 ImGui_ImplOpenGL3_NewFrame();
                 ImGui_ImplGlfw_NewFrame();
                 ImGui::NewFrame();
+                int dw, dh;
+                glfwGetFramebufferSize(win.glfwWindow, &dw, &dh);
+                ImGui::SetNextWindowPos(ImVec2(0,0));
+                ImGui::SetNextWindowSize(ImVec2((float)dw, (float)dh));
                 ImGui::Begin("##root", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground | 
                 ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings | 
-                ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+                ImGuiWindowFlags_NoDecoration);
                 for (auto& w : win.widgets) {
                     switch (w.type) {
                         case Widget::LABEL:
@@ -2895,7 +2922,7 @@ bool GUI::execute (const string& function, vector<any>& args) {
                             break;
                         case Widget::BUTTON:
                             ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
-                            if (ImGui::Button(w.text.c_str(), w.size))
+                            if (ImGui::Button(w.id.c_str(), w.size))
                                 w.callback.runInterpret();
                             break;
                         case Widget::TEXTFIELD:
@@ -2903,15 +2930,17 @@ bool GUI::execute (const string& function, vector<any>& args) {
                             strncpy(buffer, w.text.c_str(), sizeof(buffer));
                             buffer[sizeof(buffer)-1] = 0;
                             ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
+                            ImGui::SetNextItemWidth(w.size.x);
                             if (ImGui::InputText(w.id.c_str(), buffer, sizeof(buffer)))
                                 w.text = string(buffer);
                             break;
                         case Widget::CHECKBOX:
                             ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
-                            ImGui::Checkbox(w.text.c_str(), &w.bvalue);
+                            ImGui::Checkbox(w.id.c_str(), &w.bvalue);
                             break;
                         case Widget::SLIDER:
                             ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
+                            ImGui::SetNextItemWidth(w.size.x);
                             ImGui::SliderInt(w.id.c_str(), &w.ivalue, w.min, w.max);
                             break;
                         case Widget::PROGRESS:
@@ -2920,6 +2949,7 @@ bool GUI::execute (const string& function, vector<any>& args) {
                             break;
                         case Widget::DROPDOWN:
                             ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
+                            ImGui::SetNextItemWidth(w.size.x);
                             if (ImGui::BeginCombo(w.id.c_str(), w.text.c_str())) {
                                 for (auto& opt : w.options) {
                                     bool selected = (w.text == opt);
@@ -2948,6 +2978,25 @@ bool GUI::execute (const string& function, vector<any>& args) {
                 glClear(GL_COLOR_BUFFER_BIT);
                 ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
                 glfwSwapBuffers(win.glfwWindow);
+            }
+        }
+
+        for (auto it = windows.begin(); it != windows.end(); ) {
+            Window& win = it->second;
+            if (win.closing) {
+                if (win.glfwWindow && win.imguiCtx) {
+                    ImGui::SetCurrentContext(win.imguiCtx);
+                    ImGui_ImplOpenGL3_Shutdown();
+                    ImGui_ImplGlfw_Shutdown();
+                    ImGui::DestroyContext(win.imguiCtx);
+                    win.imguiCtx = nullptr;
+
+                    glfwDestroyWindow(win.glfwWindow);
+                    win.glfwWindow = nullptr;
+                }
+                it = windows.erase(it);
+            } else {
+                ++it;
             }
         }
 
