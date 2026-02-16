@@ -85,7 +85,7 @@ vector<string> split (int& tabCount, const string& line) {
 void injectUnderscores (string& line) {
     bool inString = false;
     for (int i = 1; i < line.size(); i++) {
-        if (line[i] == '\"' && line[i-1] != "\\") inString = !inString;
+        if (line[i] == '\"' && line[i-1] != '\\') inString = !inString;
         else if (line[i] == ' ' && inString) line[i] = '_';
         else if (line[i] == '_' && inString) line.insert(i++, "\\");
     }
