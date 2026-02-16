@@ -1,0 +1,16 @@
+import gui io
+
+handler
+	text = "3"
+	get_textfield; "Set Label" "TextField" text
+	display; text "\n"
+	set_label; "Set Label" "Label" text
+
+start
+	make_window; "Set Label" 0 0 600 600
+	add_label; "Set Label" "Label" 200 250 12 "Test"
+	add_textfield; "Set Label" "TextField" 200 300 175 25
+	add_button; "Set Label" "Put" 400 300 50 30 handler:
+	
+	add_window; "Set Label"
+	render_gui;

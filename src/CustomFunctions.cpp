@@ -2649,30 +2649,6 @@ bool GUI::execute (const string& function, vector<any>& args) {
 
         return true;
     }
-    else if (function == "add_image;") {
-        if (args.size() != 7) IncorrectNumArguments();
-        // === START DEFINITION ===
-
-        string& winTitle = ref_get<string>(args[0]);
-        string& label = ref_get<string>(args[1]);
-        int& x = ref_get<int>(args[2]);
-        int& y = ref_get<int>(args[3]);
-        int& w = ref_get<int>(args[4]);
-        int& h = ref_get<int>(args[5]);
-        string& path = ref_get<string>(args[6]);
-
-        Widget wdg;
-        wdg.type = Widget::IMAGE;
-        wdg.id = label;
-        wdg.pos = ImVec2((float)x, (float)y);
-        wdg.size = ImVec2((float)w, (float)h);
-        wdg.imagePath = path;
-        windows[winTitle].widgets.push_back(wdg);
-
-        // === END DEFINITION ===
-
-        return true;
-    }
     else if (function == "add_window;") {
         if (args.size() != 1) IncorrectNumArguments();
         // === START DEFINITION ===
@@ -2746,7 +2722,18 @@ bool GUI::execute (const string& function, vector<any>& args) {
         if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        string& title = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        string& str = ref_get<string>(args[2]);
+        auto it = windows.find(title);
+        if (it != windows.end() && it->second.running) {
+            for (auto& w : it->second.widgets) {
+                if (w.id == label && w.type == Widget::LABEL) {
+                    w.text = str;
+                    return true;
+                }
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -2756,7 +2743,18 @@ bool GUI::execute (const string& function, vector<any>& args) {
         if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        string& title = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        string& str = ref_get<string>(args[2]);
+        auto it = windows.find(title);
+        if (it != windows.end() && it->second.running) {
+            for (auto& w : it->second.widgets) {
+                if (w.id == "##"+label && w.type == Widget::TEXTFIELD) {
+                    str = w.text;
+                    return true;
+                }
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -2766,7 +2764,18 @@ bool GUI::execute (const string& function, vector<any>& args) {
         if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        string& title = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        string& str = ref_get<string>(args[2]);
+        auto it = windows.find(title);
+        if (it != windows.end() && it->second.running) {
+            for (auto& w : it->second.widgets) {
+                if (w.id == "##"+label && w.type == Widget::TEXTFIELD) {
+                    w.text = str;
+                    return true;
+                }
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -2776,7 +2785,19 @@ bool GUI::execute (const string& function, vector<any>& args) {
         if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        string& title = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        int& n = ref_get<int>(args[2]);
+        auto it = windows.find(title);
+        if (it != windows.end() && it->second.running) {
+            for (auto& w : it->second.widgets) {
+                if (w.id == "##"+label && w.type == Widget::CHECKBOX) {
+                    if (w.bvalue) n = 1;
+                    else n = 0;
+                    return true;
+                }
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -2786,7 +2807,17 @@ bool GUI::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        string& title = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        auto it = windows.find(title);
+        if (it != windows.end() && it->second.running) {
+            for (auto& w : it->second.widgets) {
+                if (w.id == "##"+label && w.type == Widget::CHECKBOX) {
+                    w.bvalue = true;
+                    return true;
+                }
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -2796,7 +2827,17 @@ bool GUI::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        string& title = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        auto it = windows.find(title);
+        if (it != windows.end() && it->second.running) {
+            for (auto& w : it->second.widgets) {
+                if (w.id == "##"+label && w.type == Widget::CHECKBOX) {
+                    w.bvalue = false;
+                    return true;
+                }
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -2806,7 +2847,17 @@ bool GUI::execute (const string& function, vector<any>& args) {
         if (args.size() != 2) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        string& title = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        auto it = windows.find(title);
+        if (it != windows.end() && it->second.running) {
+            for (auto& w : it->second.widgets) {
+                if (w.id == "##"+label && w.type == Widget::CHECKBOX) {
+                    w.bvalue = !w.bvalue;
+                    return true;
+                }
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -2816,7 +2867,18 @@ bool GUI::execute (const string& function, vector<any>& args) {
         if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        string& title = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        int& n = ref_get<int>(args[2]);
+        auto it = windows.find(title);
+        if (it != windows.end() && it->second.running) {
+            for (auto& w : it->second.widgets) {
+                if (w.id == "##"+label && w.type == Widget::SLIDER) {
+                    n = w.ivalue;
+                    return true;
+                }
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -2826,17 +2888,18 @@ bool GUI::execute (const string& function, vector<any>& args) {
         if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
-
-        // === END DEFINITION ===
-
-        return true;
-    }
-    else if (function == "get_progress_bar;") {
-        if (args.size() != 3) IncorrectNumArguments();
-        // === START DEFINITION ===
-
-
+        string& title = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        int& n = ref_get<int>(args[2]);
+        auto it = windows.find(title);
+        if (it != windows.end() && it->second.running) {
+            for (auto& w : it->second.widgets) {
+                if (w.id == "##"+label && w.type == Widget::SLIDER) {
+                    w.ivalue = n;
+                    return true;
+                }
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -2846,7 +2909,18 @@ bool GUI::execute (const string& function, vector<any>& args) {
         if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        string& title = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        float& x = ref_get<float>(args[2]);
+        auto it = windows.find(title);
+        if (it != windows.end() && it->second.running) {
+            for (auto& w : it->second.widgets) {
+                if (w.id == label && w.type == Widget::PROGRESS) {
+                    w.fvalue = x;
+                    return true;
+                }
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -2856,7 +2930,18 @@ bool GUI::execute (const string& function, vector<any>& args) {
         if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
+        string& title = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        string& str = ref_get<string>(args[2]);
+        auto it = windows.find(title);
+        if (it != windows.end() && it->second.running) {
+            for (auto& w : it->second.widgets) {
+                if (w.id == "##"+label && w.type == Widget::DROPDOWN) {
+                    str = w.text;
+                    return true;
+                }
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -2866,17 +2951,21 @@ bool GUI::execute (const string& function, vector<any>& args) {
         if (args.size() != 3) IncorrectNumArguments();
         // === START DEFINITION ===
 
-
-
-        // === END DEFINITION ===
-
-        return true;
-    }
-    else if (function == "change_image;") {
-        if (args.size() != 3) IncorrectNumArguments();
-        // === START DEFINITION ===
-
-
+        string& title = ref_get<string>(args[0]);
+        string& label = ref_get<string>(args[1]);
+        string& str = ref_get<string>(args[2]);
+        auto it = windows.find(title);
+        if (it != windows.end() && it->second.running) {
+            for (auto& w : it->second.widgets) {
+                if (w.id == "##"+label && w.type == Widget::DROPDOWN) {
+                    if (std::find(w.options.begin(), w.options.end(), str) != w.options.end())
+                        w.text = str;
+                    else
+                        w.text.clear();
+                    return true;
+                }
+            }
+        }
 
         // === END DEFINITION ===
 
@@ -2927,14 +3016,15 @@ bool GUI::execute (const string& function, vector<any>& args) {
                             if (ImGui::Button(w.id.c_str(), w.size))
                                 w.callback.runInterpret();
                             break;
-                        case Widget::TEXTFIELD:
-                            char buffer[256];
-                            strncpy(buffer, w.text.c_str(), sizeof(buffer));
-                            buffer[sizeof(buffer)-1] = 0;
+                        case Widget::TEXTFIELD: {
+                            size_t buf_size = max<size_t>(w.text.size() + 1, 1024);
+                            vector<char> buffer(buf_size);
+                            memcpy(buffer.data(), w.text.c_str(), w.text.size() + 1);
                             ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
-                            if (ImGui::InputTextMultiline(w.id.c_str(), buffer, sizeof(buffer), ImVec2(w.size.x, w.size.y)))
-                                w.text = string(buffer);
+                            if (ImGui::InputTextMultiline(w.id.c_str(), buffer.data(), buffer.size(), ImVec2(w.size.x, w.size.y)))
+                                w.text = string(buffer.data());
                             break;
+                        }
                         case Widget::CHECKBOX:
                             ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
                             ImGui::Checkbox(w.id.c_str(), &w.bvalue);
@@ -2960,11 +3050,6 @@ bool GUI::execute (const string& function, vector<any>& args) {
                                 }
                                 ImGui::EndCombo();
                             }
-                            break;
-                        case Widget::IMAGE:
-                            ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
-                            if (w.textureID)
-                                ImGui::Image((void*)(intptr_t)w.textureID, w.size);
                             break;
                         default:
                             break;
@@ -3000,16 +3085,6 @@ bool GUI::execute (const string& function, vector<any>& args) {
                 ++it;
             }
         }
-
-        // === END DEFINITION ===
-
-        return true;
-    }
-    else if (function == "play_sound;") {
-        if (args.size() != 1) IncorrectNumArguments();
-        // === START DEFINITION ===
-
-
 
         // === END DEFINITION ===
 

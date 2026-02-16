@@ -173,8 +173,6 @@ class GUI: public Function {
         bool bvalue = false;
         std::vector<std::string> options;
         storedInterpret callback;
-        GLuint textureID = 0;
-        std::string imagePath;
     };
     struct Window {
         std::string title;
