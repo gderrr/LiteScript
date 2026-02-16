@@ -1,6 +1,7 @@
 import gui io
 
 handler
+	display; "Closing...\n"
 	close_window; "MyWindow"
 
 start
@@ -11,8 +12,8 @@ start
 	yoff = 100
 
 	add_label; "MyWindow" "Label" x1 yoff+0 12 "Hello World!"
-	add_button; "MyWindow" "Close" x1 yoff+200 50 30 handler:
-	add_textfield; "MyWindow" "TextField" x1 yoff+400 100 "Placeholder"
+	add_button; "MyWindow" "Close" x1 yoff+200 100 100 handler:
+	add_textfield; "MyWindow" "TextField" x1 yoff+400 100 100 "Placeholder"
 	add_checkbox; "MyWindow" "Checkbox" x1 yoff+600 5 5
 	add_slider; "MyWindow" "Slider" x2 yoff+0 100 0 100 50
 	add_progress_bar; "MyWindow" "ProgressBar" x2 yoff+200 40 20 0.5

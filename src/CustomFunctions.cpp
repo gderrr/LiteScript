@@ -2533,13 +2533,14 @@ bool GUI::execute (const string& function, vector<any>& args) {
         int& x = ref_get<int>(args[2]);
         int& y = ref_get<int>(args[3]);
         int& w = ref_get<int>(args[4]);
-        string text = (args.size() == 6) ? ref_get<string>(args[5]) : "Enter text...";
+        int& h = ref_get<int>(args[5]);
+        string text = (args.size() == 7) ? ref_get<string>(args[6]) : "Enter text...";
 
         Widget wdg;
         wdg.type = Widget::TEXTFIELD;
         wdg.id = "##" + label;
         wdg.pos = ImVec2((float)x, (float)y);
-        wdg.size = ImVec2((float)w, 0.0f);
+        wdg.size = ImVec2((float)w, (float)h);
         wdg.text = text;
         windows[winTitle].widgets.push_back(wdg);
 
@@ -2912,13 +2913,14 @@ bool GUI::execute (const string& function, vector<any>& args) {
                 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground | 
                 ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings | 
                 ImGuiWindowFlags_NoDecoration);
+                ImGui::SetWindowFontScale(12 / REFERENCE_FONT_SIZE);
                 for (auto& w : win.widgets) {
                     switch (w.type) {
                         case Widget::LABEL:
                             ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
                             ImGui::SetWindowFontScale(w.size.x / REFERENCE_FONT_SIZE);
                             ImGui::Text("%s", w.text.c_str());
-                            ImGui::SetWindowFontScale(1.0f);
+                            ImGui::SetWindowFontScale(12 / REFERENCE_FONT_SIZE);
                             break;
                         case Widget::BUTTON:
                             ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
@@ -2930,8 +2932,7 @@ bool GUI::execute (const string& function, vector<any>& args) {
                             strncpy(buffer, w.text.c_str(), sizeof(buffer));
                             buffer[sizeof(buffer)-1] = 0;
                             ImGui::SetCursorPos(ImVec2(w.pos.x, w.pos.y));
-                            ImGui::SetNextItemWidth(w.size.x);
-                            if (ImGui::InputText(w.id.c_str(), buffer, sizeof(buffer)))
+                            if (ImGui::InputTextMultiline(w.id.c_str(), buffer, sizeof(buffer), ImVec2(w.size.x, w.size.y)))
                                 w.text = string(buffer);
                             break;
                         case Widget::CHECKBOX:
