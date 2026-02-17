@@ -33,3 +33,20 @@ This project uses the following open-source libraries:
    - Notes:
      - Ensure `glad.h` is included **before** any system OpenGL headers (e.g., `<GL/gl.h>`).  
      - Can be updated by downloading the latest version from the GLAD web service or GitHub repository.
+
+5. [libpqxx](https://github.com/jtv/libpqxx) — BSD 3-Clause License  
+   - Copyright (c) 2000-2026 Jeroen T. Vermeulen  
+   - Files dynamically linked at build time (no source code included).  
+   - Purpose: Provides a modern C++ client API for PostgreSQL, enabling database connectivity, prepared statements, and transaction support in the interpreter.  
+   - Notes:  
+     - libpqxx depends on `libpq` (the official PostgreSQL client library).  
+     - To install on Linux: `sudo apt install libpqxx-dev libpq-dev`  
+     - Linked with `-lpqxx -lpq` during build.  
+
+6. [PostgreSQL Client Library (libpq)](https://www.postgresql.org/) — BSD 3-Clause License  
+   - Copyright (c) 1996-2026 The PostgreSQL Global Development Group  
+   - Files dynamically linked at build time (no source code included).  
+   - Purpose: Provides the low-level client interface used internally by libpqxx for communication with PostgreSQL databases.  
+   - Notes:  
+     - libpq is distributed as part of the PostgreSQL project.  
+     - Can be obtained from official PostgreSQL packages or source distributions.
