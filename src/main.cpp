@@ -35,6 +35,7 @@ struct TLine {
 map<string,int> funcs;
 vector<TLine> program;
 set<string> importStatements;
+set<string> requireStatements;
 vector<unique_ptr<Function>> importedFunctions;
 
 struct TLoop {
@@ -187,7 +188,7 @@ vector<TLine> parse (int startln, const vector<string>& readFile) {
 
         if (tokens[0] == "import") {
             for (int j = 1; j < tokens.size(); j++) {
-                // Now, we don't create duplicated imports with this implementation
+                // We don't create duplicated imports with this implementation
                 importStatements.insert(tokens[j]);
             }
         }
@@ -198,12 +199,14 @@ vector<TLine> parse (int startln, const vector<string>& readFile) {
                     cerr << "Indicated file is not a LiteScript file. (.lts)" << endl;
                     exit(1);
                 }
-
-                vector<string> readFile = readClean(tokens[j]);
-                vector<TLine> requiredProgram = parse(ln, readFile);
-                for (int k = 0; k < requiredProgram.size(); k++) {
-                    parsedProgram.push_back(requiredProgram[k]);
-                    ln++;
+                if (requireStatements.find(tokens[j]) == requireStatements.end()) {
+                    vector<string> readFile = readClean(tokens[j]);
+                    vector<TLine> requiredProgram = parse(ln, readFile);
+                    for (int k = 0; k < requiredProgram.size(); k++) {
+                        parsedProgram.push_back(requiredProgram[k]);
+                        ln++;
+                    }
+                    requireStatements.insert(tokens[j]);
                 }
             }
         }
@@ -680,6 +683,8 @@ int main (int argc, char* argv[]) {
 
     //for (string r: readFile) cout << r << endl;
 
+    // Also add this program to requireStatements
+    requireStatements.insert(filePath);
     program = parse(0, readFile);
 
     /*
