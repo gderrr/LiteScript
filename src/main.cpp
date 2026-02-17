@@ -272,22 +272,7 @@ any interpret (int startLine, const vector<any>& args) {
     vector<TLoop> loopLines;
 
     // === RUNTIME PHASE ===
-    //                         indentLevel 0 indicates eoFn             Handle eoFn with valid loops
     for (int line = startLine; !((line >= program.size() && loopLines.empty()) || (program[line].indentLevel == 0 && loopLines.empty())) ; line++) {
-
-        /*
-        cout << "line: " << program[line].code << endl;
-        cout << "globalVariables:";
-        for (auto& [key, value] : globalVariables) {
-            cout << " {" << key << "," << any_cast<int>(value) << "}";
-        }
-        cout << endl;
-        cout << "localVariables:";
-        for (auto& [key, value] : variables) {
-            cout << " {" << key << "," << any_cast<int>(value) << "}";
-        }
-        cout << endl;
-        */
 
         // Handle reentering loop indendation or more
         if (!loopLines.empty() && program[line].indentLevel <= loopLines.back().indentLevel) {
@@ -307,8 +292,6 @@ any interpret (int startLine, const vector<any>& args) {
             variableStack.push(vector<string>());
         }
         prevIndentLevel = program[line].indentLevel;
-        
-        //cout << program[line].code << endl;
 
         int dummyTabs; // To be ignored
         vector<string> instruction = split(dummyTabs, program[line].code);
@@ -681,19 +664,9 @@ int main (int argc, char* argv[]) {
 
     vector<string> readFile = readClean(filePath);
 
-    //for (string r: readFile) cout << r << endl;
-
     // Also add this program to requireStatements
     requireStatements.insert(filePath);
     program = parse(0, readFile);
-
-    /*
-    cout << "L I code" << endl;
-    cout << "--------" << endl; 
-    for (int i = 0; i < program.size(); i++) {
-        cout << i << " " << program[i].indentLevel << " " << program[i].code << endl;
-    }
-    */
     
     // Create imported functions
     FunctionFactory& factory = FunctionFactory::getInstance();

@@ -55,41 +55,6 @@ bool isRightAssociative (const string& op) {
     return (op == "u-" || op == "!" || op == "~" || op == "**");
 }
 
-void DEBUG_PRINT_TOKEN (const Token& tok) {
-    string type;
-    if (tok.type == TokenType::Number) type = "Number";
-    else if (tok.type == TokenType::Float) type = "Float";
-    else if (tok.type == TokenType::String) type = "String";
-    else if (tok.type == TokenType::Variable) type = "Variable";
-    else if (tok.type == TokenType::Operator) type = "Operator";
-    else type = "Parenthesis";
-    cout << "{Type: " << type << ", Value: " << tok.value << "}" << endl;
-}
-
-void DEBUG_PRINT_TOKENS (const vector<Token>& tokens) {
-    int i = 0;
-    for (const auto& tok: tokens) {
-        cout << "Token " << i << ": ";
-        DEBUG_PRINT_TOKEN(tok);
-        i++;
-    }
-}
-
-void DEBUG_PRINT_EVAL (const Token& tok, const stack<any>& s) {
-    stack<any> st = s;
-    cout << "Token: ";
-    DEBUG_PRINT_TOKEN(tok);
-    cout << "Stack: ";
-    while (!st.empty()) {
-        if (st.top().type() == typeid(int)) cout << "int{" << any_cast<int>(st.top()) << "} ";
-        else if (st.top().type() == typeid(float)) cout << "float{" << any_cast<float>(st.top()) << "} ";
-        else if (st.top().type() == typeid(string)) cout << "string{" << any_cast<string>(st.top()) << "} ";
-        else cout << "IncompType(" << st.top().type().name() << ") ";
-        st.pop();
-    }
-    cout << endl;
-}
-
 ////////////////////////////////////////////
 // EVALUATOR
 ////////////////////////////////////////////
@@ -127,7 +92,7 @@ vector<Token> tokenize (const string& expr) {
                         case '\\': val.push_back('\\'); break; 
                         case '"': val.push_back('"'); break;
                         case '0': val.push_back('\0'); break;
-                        case '_': val.push_back('_'); break; // Since spaces are squashed, '_' in lts rep. spaces and '\_' rep. _ in strings
+                        case '_': val.push_back('_'); break;
                         default: val.push_back(next); break; // unknown
                     }
                 } else if (expr[i] == '_') {
@@ -175,7 +140,6 @@ vector<Token> tokenize (const string& expr) {
         while (i < expr.size() && (isalnum(expr[i]) || expr[i]=='_')) i++;
         tokens.push_back(Token{TokenType::Variable, expr.substr(start, i - start)});
     }
-    //DEBUG_PRINT_TOKENS(tokens);
     return tokens;
 }
 
@@ -227,7 +191,6 @@ vector<Token> toPostfix (const vector<Token>& tokens) {
         output.push_back(ops.top());
         ops.pop();
     }
-    //DEBUG_PRINT_TOKENS(output);
     return output;
 }
 
@@ -359,9 +322,6 @@ any evalPostfix (const vector<Token>& postfix, const map<string, any>& vars) {
                 exit(1);
             }
         }
-
-        //DEBUG_PRINT_EVAL(tok, st);
-
     }
     any ret = st.top();
     return ret;
@@ -369,7 +329,6 @@ any evalPostfix (const vector<Token>& postfix, const map<string, any>& vars) {
 
 any evaluate (const map<string,any>& variables, const string& expression) {
     auto tokens = tokenize(expression);
-    //cout << "===" << endl;
     auto postfix = toPostfix(tokens);
     return evalPostfix(postfix, variables);
 }

@@ -20,20 +20,6 @@
 #include "httplib.h"
 #include "imgui/imgui.h"
 
-// NOTE: given that the DS that holds functions is global, all threads can access it, causing problems to class attributes.
-// So, if an attribute can be thread local to be protected, must put "static thread_local" and define it in .cpp file.
-//
-// .h:
-// class X : public Function {
-// ...
-// private:
-// static thread_local TYPE x;
-// ...
-// };
-// 
-// .cpp:
-// thread_local TYPE X::x;
-// ...
 class Function {
 
     public:
@@ -192,3 +178,18 @@ class GUI: public Function {
     virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
     ~GUI();
 };
+
+// NOTE: given that the DS that holds functions is global, all threads can access it, causing problems to class attributes.
+// So, if an attribute can be thread local to be protected, must put "static thread_local" and define it in .cpp file.
+//
+// .h:
+// class X : public Function {
+// ...
+// private:
+// static thread_local TYPE x;
+// ...
+// };
+// 
+// .cpp:
+// thread_local TYPE X::x;
+// ...
