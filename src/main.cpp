@@ -15,6 +15,7 @@
 #include <iterator>
 #include <deque>
 #include <any>
+#include <exception>
 
 #include "CustomFunctions.h"
 #include "Extras.h"
@@ -651,7 +652,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 0.8.0 2026-2-17" << endl;
+        cout << "lite 0.8.1 2026-2-17" << endl;
         return 0;
     }
 
@@ -676,5 +677,21 @@ int main (int argc, char* argv[]) {
     int startLine = funcs.at("start");
     vector<any> programArgs;
     for (int i = 2; i < argc; i++) programArgs.push_back(string(argv[i]));
-    interpret(startLine+1, programArgs);
+
+    // Primal entry point
+    try {
+        interpret(startLine+1, programArgs);
+    } catch (const out_of_range& e) {
+        cerr << "Unknown symbol, use of undefined variable or function." << endl;
+        return 1;
+    } catch (const bad_any_cast& e) {
+        cerr << "Type mismatch, wrong type provided." << endl;
+        return 1;
+    } catch (const exception& e) {
+        cerr << "Unknown/unexpected interpreter exception, " << e.what() << endl;
+        return 1;
+    } catch (...) {
+        cerr << "Fatal interpreter error." << endl;
+        return 1;
+    }
 }
