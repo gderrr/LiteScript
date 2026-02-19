@@ -22,10 +22,12 @@
 #include <mutex>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <pqxx/pqxx>
 #include <random>
 #include <set>
 #include <shared_mutex>
 #include <signal.h>
+#include <sqlite3.h>
 #include <sstream>
 #include <string>
 #include <sys/socket.h>
@@ -76,6 +78,7 @@ vector<unique_ptr<Function>> FunctionFactory::createFunctions (const set<string>
         else if (i == "filesystem") ret.push_back(make_unique<Filesystem>());
         else if (i == "network") ret.push_back(make_unique<Network>());
         else if (i == "gui") ret.push_back(make_unique<GUI>());
+        else if (i == "database") ret.push_back(make_unique<Database>());
 
         else {
             cerr << "Imported module is not a LiteScript module: " << i << endl;
@@ -3091,4 +3094,143 @@ bool GUI::execute (const string& function, vector<any>& args) {
         return true;
     }
     return false;
+}
+
+/////////////////////////////////////
+//   DATABASE
+/////////////////////////////////////
+
+thread_local unique_ptr<Database::DBWrapper> Database::backend = nullptr;
+thread_local bool Database::inTx = false;
+
+Database::SQLite::SQLite (const string& path) {
+    if (sqlite3_open(path.c_str(), &db) != SQLITE_OK) {
+        cerr << "database: Failed to open SQLite database, " << sqlite3_errmsg(db) << endl;
+        exit(1);
+    }
+}
+
+void Database::SQLite::close () {
+    if (stmt) {
+        sqlite3_finalize(stmt);
+        stmt = nullptr;
+    }
+    if (db) {
+        sqlite3_close(db);
+        db = nullptr;
+    }
+}
+
+void Database::SQLite::begin_transaction () {
+    if (!db) {
+        cerr << "database: No open database." << endl;
+        exit(1);
+    }
+    char* err = nullptr;
+    if (sqlite3_exec(db, "BEGIN_TRANSACTION;", nullptr, nullptr, nullptr) != SQLITE_OK) {
+        cerr << "database: SQLite begin failed." << endl;
+        exit(1);
+    }
+}
+
+void Database::SQLite::commit_transaction () {
+    if (!db) {
+        cerr << "database: No open database." << endl;
+        exit(1);
+    }
+    if (sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr) != SQLITE_OK) {
+        cerr << "database: SQLite commit failed." << endl;
+        exit(1);
+    }
+}
+
+void Database::SQLite::rollback_transaction () {
+    if (!db) {
+        cerr << "database: No open database." << endl;
+        exit(1);
+    }
+    if (sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr) != SQLITE_OK) {
+        cerr << "database: SQLite rollback failed." << endl;
+        exit(1);
+    }
+}
+
+void Database::SQLite::prepare (const string& sql) {
+    if (!db) {
+        cerr << "database: No open database." << endl;
+        exit(1);
+    }
+    if (stmt) {
+        sqlite3_finalize(stmt);
+        stmt = nullptr;
+    }
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "database: SQLite prepare failed." << endl;
+        exit(1);
+    }
+}
+
+void Database::SQLite::bind (int index, const std::any& value) {
+    if (!stmt) {
+        cerr << "database: No prepared statement." << endl;
+        exit(1);
+    }
+    if (index < 1 || index > sqlite3_bind_parameter_count(stmt)) {
+        cerr << "database: Invalid bind index." << endl;
+        exit(1);
+    }
+    int rc = SQLITE_OK;
+    if (value.type() == typeid(int)) {
+        rc = sqlite3_bind_int(stmt, index, any_cast<int>(value));
+    }
+    else if (value.type() == typeid(float)) {
+        rc = sqlite3_bind_double(stmt, index, static_cast<double>(any_cast<float>(value)));
+    }
+    else {
+        const string& s = any_cast<string>(value);
+        rc = sqlite3_bind_text(stmt, index, s.c_str(), static_cast<int>(s.size()), SQLITE_TRANSIENT);
+    }
+    if (rc != SQLITE_OK) {
+        cerr << "database: Failed to bind parameter " << index << '.' << endl;
+        exit(1);
+    } 
+}
+
+map<Key,any> Database::SQLite::execute () {
+    if (!stmt) {
+        cerr << "database: No prepared statement." << endl;
+        exit(1);
+    }
+    map<Key,any> results;
+    int rc;
+    int row = 0;
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+        int cols = sqlite3_column_count(stmt);
+        map<Key,any> resultRow;
+        for (int i = 0; i < cols; i++) {
+            const char* colName = sqlite3_column_name(stmt, i);
+            string columnName = colName ? colName : to_string(i);
+            int type = sqlite3_column_type(stmt, i);
+            switch (type) {
+                case SQLITE_INTEGER:
+                    resultRow[Key{columnName}] = sqlite3_column_int(stmt, i);
+                    break;
+                case SQLITE_FLOAT:
+                    resultRow[Key{columnName}] = (float)sqlite3_column_double(stmt, i);
+                    break;
+                case SQLITE_TEXT:
+                    resultRow[Key{columnName}] = string((const char*)sqlite3_column_text(stmt, i));
+                    break;
+                default:
+                    resultRow[Key{columnName}] = string("NULL");
+            }
+        }
+        results[Key{row}] = resultRow;
+    }
+    if (rc != SQLITE_DONE) {
+        lastErr = sqlite3_errmsg(db);
+    }
+    sqlite3_reset(stmt);
+    sqlite3_clear_bindings(stmt);
+    return results;
 }
