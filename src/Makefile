@@ -10,7 +10,7 @@ CFLAGS   ?= -O2
 # -------------------------
 # Linker flags (system libs)
 # -------------------------
-LDFLAGS  ?= -lglfw -lGL -ldl -lpthread -lpqxx -lpq
+LDFLAGS  ?= -lglfw -lGL -ldl -lpthread -lpqxx -lpq -lsqlite3
 
 # Uncomment to enable AddressSanitizer
 #CXXFLAGS += -fsanitize=address
