@@ -2,7 +2,7 @@
     "name": "litescript",
     "displayName": "LiteScript VSCode Extension",
     "description": "Syntax highlighting and formatting for LiteScript",
-    "version": "0.1.7",
+    "version": "0.1.8",
     "publisher": "gderrr",
     "engines": {
         "vscode": "^1.70.0"

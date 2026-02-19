@@ -3,7 +3,7 @@
     "patterns": [
         {
             "name": "keyword.control.litescript",
-            "match": "\\b(conditional|loop|return|exit|start|import|require)\\b"
+            "match": "\\b(opt|conditional|loop|return|exit|start|import|require)\\b"
         },
         {
             "name": "comment.line.litescript",
@@ -20,7 +20,23 @@
         {
             "name": "string.quoted.double.litescript",
             "begin": "\"",
-            "end": "\""
+            "beginCaptures": {
+                "0": { "name": "punctuation.definition.string.begin.litescript" }
+            },
+            "end": "(?<!\\\\)\"",
+            "endCaptures": {
+                "0": { "name": "punctuation.definition.string.end.litescript" }
+            },
+            "patterns": [
+                {
+                "name": "constant.character.escape.litescript",
+                    "match": "\\\\([nrt0\"\\\\])"
+                },
+                {
+                    "name": "invalid.illegal.escape.litescript",
+                    "match": "\\\\."
+                }
+            ]
         },
         {
             "name": "storage.type.litescript",
