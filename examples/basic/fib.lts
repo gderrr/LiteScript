@@ -1,9 +1,9 @@
 import io
 
 fib
-	conditional arg0==1
+	opt arg0==1
 		return 0
-	conditional arg0==2
+	opt arg0==2
 		return 1
 	fibo = 0
 	fibo += fib: arg0-1
@@ -13,7 +13,7 @@ fib
 start
 	n = 0
 	loop 1
-		display; "n:_"
+		display; "n: "
 		input; n
 		n = fib: n
-		display; "fib\_n:_" n "\n"
+		display; "fib_n: " n "\n"

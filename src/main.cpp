@@ -212,7 +212,7 @@ vector<TLine> parse (int startln, const vector<string>& readFile) {
             }
         }
         else {
-            if (tokens[0] == "conditional" || tokens[0] == "loop") {
+            if (tokens[0] == "opt" || tokens[0] == "loop" || tokens[0] == "conditional") {
                 string conditional_expr;
                 for (int j = 1; j < tokens.size(); j++) {
                     conditional_expr += tokens[j];
@@ -498,7 +498,7 @@ any interpret (int startLine, const vector<any>& args) {
 
 
         // CONDITIONAL
-        else if (instruction[0] == "conditional") {
+        else if (instruction[0] == "opt" || instruction[0] == "conditional") {
             any cond = evaluate(variables, instruction[1]);
             bool isFalse = false;
             if (cond.type() == typeid(int)) isFalse = (any_cast<int>(cond) == 0);
@@ -652,7 +652,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 0.8.1 2026-2-17" << endl;
+        cout << "lite 0.8.2 2026-2-19" << endl;
         return 0;
     }
 
