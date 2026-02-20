@@ -226,7 +226,7 @@ class Database: public Function {
         private:
 
         std::unique_ptr<pqxx::connection> conn;
-        std::unique_ptr<pqxx::work> tx;
+        std::unique_ptr<pqxx::work> txn;
         std::string preparedSQL;
         std::vector<std::string> params;
         std::string lastErr;
@@ -245,7 +245,7 @@ class Database: public Function {
         ~PostgreSQL() override { close(); };
     };
     static thread_local std::unique_ptr<DBWrapper> backend;
-    static thread_local bool inTx;
+    static thread_local bool inTxn;
 
     public:
 

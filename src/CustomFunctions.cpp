@@ -3101,7 +3101,7 @@ bool GUI::execute (const string& function, vector<any>& args) {
 /////////////////////////////////////
 
 thread_local unique_ptr<Database::DBWrapper> Database::backend = nullptr;
-thread_local bool Database::inTx = false;
+thread_local bool Database::inTxn = false;
 
 Database::SQLite::SQLite (const string& path) {
     if (sqlite3_open(path.c_str(), &db) != SQLITE_OK) {
@@ -3233,4 +3233,154 @@ map<Key,any> Database::SQLite::execute () {
     sqlite3_reset(stmt);
     sqlite3_clear_bindings(stmt);
     return results;
+}
+
+Database::PostgreSQL::PostgreSQL (const std::string& url, const std::string& user, const std::string& pass, const std::string& db) {
+    string conninfo = "host=" + url + " user=" + user + " password=" + pass + " dbname=" + db; 
+    try {
+        conn = make_unique<pqxx::connection>(conninfo);
+        if (!conn->is_open()) {
+            cerr << "database: Failed to open PostgreSQL connection." << endl;
+            exit(1);
+        }
+    } catch (const exception& e) {
+        cerr << "database: PostgreSQL connection error, " << e.what() << endl;
+        exit(1);
+    }
+}
+
+void Database::PostgreSQL::close () {
+    if (txn) txn.reset();
+    if (conn && conn->is_open()) conn->disconnect();
+}
+
+void Database::PostgreSQL::begin_transaction () {
+    if (!conn || !conn->is_open()) {
+        cerr << "database: No open database." << endl;
+        exit(1);
+    }
+    txn = make_unique<pqxx::work>(*conn);
+}
+
+void Database::PostgreSQL::commit_transaction () {
+    if (!txn) {
+        cerr << "database: No open transaction." << endl;
+        exit(1);
+    }
+    txn->commit(); txn.reset();
+}
+
+void Database::PostgreSQL::rollback_transaction () {
+    if (!txn) {
+        cerr << "database: No open transaction." << endl;
+        exit(1);
+    }
+    txn->abort(); txn.reset();
+}
+
+void Database::PostgreSQL::prepare (const string& sql) {
+    preparedSQL = sql;
+    params.clear();
+}
+
+void Database::PostgreSQL::bind (int index, const any& value) {
+    if ((int)params.size() < index) params.resize(index);
+
+    if (value.type() == typeid(int)) {
+        params[index-1] = to_string(any_cast<int>(value));
+    }
+    else if (value.type() == typeid(float)) {
+        params[index-1] = to_string(any_cast<float>(value));
+    }
+    else {
+        params[index-1] = any_cast<string>(value);
+    }
+}
+
+map<Key,any> Database::PostgreSQL::execute () {
+    if (!conn || !conn->is_open()) {
+        cerr << "database: No open database." << endl;
+        exit(1);
+    }
+    if (!txn) {
+        cerr << "database: No open transaction." << endl;
+        exit(1);
+    }
+    map<Key,any> results;
+    try {
+        pqxx::result result;
+        // pqxx doesn't support vectorized params, must use this hacky switch and limit to 6,
+        // since they are unknown at compile time.
+        switch (params.size()) {
+            case 0:
+                result = txn->exec_params(preparedSQL);
+                break;
+            case 1:
+                result = txn->exec_params(preparedSQL, params[0]);
+                break;
+            case 2:
+                result = txn->exec_params(preparedSQL, params[0], params[1]);
+                break;
+            case 3:
+                result = txn->exec_params(preparedSQL, params[0], params[1], params[2]);
+                break;
+            case 4:
+                result = txn->exec_params(preparedSQL, params[0], params[1], params[2], params[3]);
+                break;
+            case 5:
+                result = txn->exec_params(preparedSQL, params[0], params[1], params[2], params[3], params[4]);
+                break;
+            case 6:
+                result = txn->exec_params(preparedSQL, params[0], params[1], params[2], params[3], params[4], params[5]);
+                break;
+            default:
+                cerr << "database: Too many arguments for PostgreSQL prepared statement." << endl;
+                exit(1);
+        }
+        for (const auto& row : result) {
+            map<Key,any> resultRow;
+            int r = 0;
+            for (pqxx::row::size_type i = 0; i < result.columns(); ++i) {
+                string col = result.column_name(i);
+                pqxx::oid type = row[col].type();
+                switch (type) {
+                    case 0: // NULL
+                        resultRow[Key{col}] = string("NULL");
+                        break;
+                    case 16: // BOOLEAN
+                    case 20: // BIGINT
+                    case 21: // SMALLINT
+                    case 23: // INTEGER
+                        resultRow[Key{col}] = row[i].as<int>();
+                        break;
+                    case 700: // REAL
+                    case 701: // FLOAT
+                    case 790: // NUMERIC
+                    case 1700: // DECIMAL
+                        resultRow[Key{col}] = row[i].as<float>();
+                        break;
+                    default:
+                        resultRow[Key{col}] = row[i].as<string>();
+                }
+            }
+            results[Key{r}] = resultRow;
+            r++;
+        }
+    } catch (const exception& e) {
+        lastErr = e.what();
+    }
+    params.clear();
+    return results;
+}
+
+Database::~Database () {
+    if (inTxn && backend) {
+        backend->rollback_transaction();
+        inTxn = false;
+    }
+    if (backend) backend.reset();
+}
+
+bool Database::execute (const string& function, vector<any>& args) {
+    return false; 
 }
