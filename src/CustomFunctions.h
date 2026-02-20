@@ -250,7 +250,6 @@ class Database: public Function {
     public:
 
     virtual bool execute (const std::string& function, std::vector<std::any>& args) override;
-    ~Database();
 };
 
 // NOTE: given that the DS that holds functions is global, all threads can access it, causing problems to class attributes.

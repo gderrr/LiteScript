@@ -3128,7 +3128,8 @@ void Database::SQLite::begin_transaction () {
     }
     char* err = nullptr;
     if (sqlite3_exec(db, "BEGIN_TRANSACTION;", nullptr, nullptr, nullptr) != SQLITE_OK) {
-        cerr << "database: SQLite begin failed." << endl;
+        string err = sqlite3_errmsg(db);
+        cerr << "database: SQLite begin failed, " << err << endl;
         exit(1);
     }
 }
@@ -3139,7 +3140,8 @@ void Database::SQLite::commit_transaction () {
         exit(1);
     }
     if (sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr) != SQLITE_OK) {
-        cerr << "database: SQLite commit failed." << endl;
+        string err = sqlite3_errmsg(db);
+        cerr << "database: SQLite commit failed, " << err << endl;
         exit(1);
     }
 }
@@ -3150,7 +3152,8 @@ void Database::SQLite::rollback_transaction () {
         exit(1);
     }
     if (sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr) != SQLITE_OK) {
-        cerr << "database: SQLite rollback failed." << endl;
+        string err = sqlite3_errmsg(db);
+        cerr << "database: SQLite rollback failed, " << err << endl;
         exit(1);
     }
 }
@@ -3165,7 +3168,8 @@ void Database::SQLite::prepare (const string& sql) {
         stmt = nullptr;
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        cerr << "database: SQLite prepare failed." << endl;
+        string err = sqlite3_errmsg(db);
+        cerr << "database: SQLite prepare failed, " << err << endl;
         exit(1);
     }
 }
@@ -3191,7 +3195,8 @@ void Database::SQLite::bind (int index, const std::any& value) {
         rc = sqlite3_bind_text(stmt, index, s.c_str(), static_cast<int>(s.size()), SQLITE_TRANSIENT);
     }
     if (rc != SQLITE_OK) {
-        cerr << "database: Failed to bind parameter " << index << '.' << endl;
+        string err = sqlite3_errmsg(db);
+        cerr << "database: Failed to bind parameter " << index << ", " << err << endl;
         exit(1);
     } 
 }
@@ -3373,14 +3378,192 @@ map<Key,any> Database::PostgreSQL::execute () {
     return results;
 }
 
-Database::~Database () {
-    if (inTxn && backend) {
+bool Database::execute (const string& function, vector<any>& args) {
+    if (function == "open_database;") {
+        if (args.size() != 1 && args.size() != 4) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        if (args.size() == 1) {
+            string& filePath = ref_get<string>(args[0]);
+            backend = make_unique<SQLite>(filePath);
+        }
+        else {
+            string& url = ref_get<string>(args[0]);
+            string& user = ref_get<string>(args[1]);
+            string& pwd = ref_get<string>(args[2]);
+            string& dbn = ref_get<string>(args[3]);
+            backend = make_unique<PostgreSQL>(url, user, pwd, dbn); 
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "in_database;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        int& x = ref_get<int>(args[0]);
+        x = backend ? 1 : 0;
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "close_database;") {
+
+        // === START DEFINITION ===
+
+        if (!backend) {
+            cerr << "database: No open database." << endl;
+            exit(1);
+        }
+        backend.reset();
+        inTxn = false;
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "begin_transaction;") {
+
+        // === START DEFINITION ===
+
+        if (!backend) {
+            cerr << "database: No open database." << endl;
+            exit(1);
+        }
+        if (inTxn) {
+            cerr << "database: Transaction already running." << endl;
+            exit(1);
+        }
+        backend->begin_transaction();
+        inTxn = true;
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "in_transaction;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        int& x = ref_get<int>(args[0]);
+        x = inTxn ? 1 : 0;
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "commit_transaction;") {
+        
+        // === START DEFINITION ===
+
+        if (!backend) {
+            cerr << "database: No open database." << endl;
+            exit(1);
+        }
+        if (!inTxn) {
+            cerr << "database: No open transaction." << endl;
+            exit(1);
+        }
+        backend->commit_transaction();
+        inTxn = false;
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "rollback_transaction;") {
+
+        // === START DEFINITION ===
+
+        if (!backend) {
+            cerr << "database: No open database." << endl;
+            exit(1);
+        }
+        if (!inTxn) {
+            cerr << "database: No open transaction." << endl;
+            exit(1);
+        }
         backend->rollback_transaction();
         inTxn = false;
-    }
-    if (backend) backend.reset();
-}
 
-bool Database::execute (const string& function, vector<any>& args) {
-    return false; 
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "prepare_statement;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        string& sql = ref_get<string>(args[0]);
+        if (!backend) {
+            cerr << "database: No open database." << endl;
+            exit(1);
+        }
+        backend->prepare(sql);
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "bind_statement;") {
+        if (args.size() != 2) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        int& idx = ref_get<int>(args[0]);
+        auto& b = args[1];
+        if (!backend) {
+            cerr << "database: No open database." << endl;
+            exit(1);
+        }
+        // un-referencewrap b => std::any of int/float/string
+        if (b.type() == typeid(reference_wrapper<int>)) {
+            backend->bind(idx, ref_get<int>(b));
+        } 
+        else if (b.type() == typeid(reference_wrapper<float>)) {
+            backend->bind(idx, ref_get<float>(b));
+        }
+        else {
+            backend->bind(idx, ref_get<string>(b));
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "execute_statement;") {
+        
+        // === START DEFINITION ===
+
+        if (!backend) {
+            cerr << "database: No open database." << endl;
+            exit(1);
+        }
+        if (args.size() == 1) {
+            map<Key,any>& cont = ref_get<map<Key,any>>(args[0]);
+            cont.clear();
+            cont = backend->execute(); 
+        }
+        else {
+            backend->execute();
+        }
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    else if (function == "get_last_database_error;") {
+        if (args.size() != 1) IncorrectNumArguments();
+        // === START DEFINITION ===
+
+        string& dst = ref_get<string>(args[0]);
+        dst = backend->last_error();
+
+        // === END DEFINITION ===
+
+        return true;
+    }
+    return false;
 }

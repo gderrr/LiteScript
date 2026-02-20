@@ -1,0 +1,16 @@
+import database io
+$ We will also make use of the network module to serialize
+$ containers to string JSON for easy visualization
+import network
+
+start
+	open_database; "minidb.db"
+	indb = 0
+	in_database; indb
+	display; indb "\n"
+	prepare_statement; "SELECT * FROM msg;"
+	container res
+	execute_statement; res
+	json = ""
+	container_to_json; res json
+	display; "Query:" "\n" json "\n"
