@@ -2,51 +2,20 @@
 
 This project uses the following open-source libraries:
 
-1. [cpp-httplib](https://github.com/yhirose/cpp-httplib) — MIT License  
-   - Copyright (c) 2016-2023 Yuta Yoshioka
-   - Files included in this project:
-     - `httplib.h`
-   - Purpose: Provides a simple, single-header HTTP/HTTPS client and server for networking features in the interpreter.
+1. [cpp-httplib](https://github.com/yhirose/cpp-httplib): MIT License  
+  Copyright (c) 2016-2023 Yuta Yoshioka
 
-2. [nlohmann/json](https://github.com/nlohmann/json) — MIT License  
-   - Copyright (c) 2013-2023 Niels Lohmann
-   - Files included in this project:
-     - `json.hpp`  
-   - Purpose: Provides JSON serialization and parsing support for data exchange and configuration.
+2. [nlohmann/json](https://github.com/nlohmann/json): MIT License  
+  Copyright (c) 2013-2023 Niels Lohmann
 
-3. [Dear ImGui](https://github.com/ocornut/imgui) — MIT License  
-   - Copyright (c) 2014-2023 Omar Cornut  
-   - Files included in this project:
-     - Core: `imgui.h`, `imgui.cpp`, `imgui_draw.cpp`, `imgui_widgets.cpp`, `imgui_tables.cpp`, `imgui_internal.h`, `imconfig.h`
-     - Backends: `imgui_impl_glfw.h`, `imgui_impl_glfw.cpp`, `imgui_impl_opengl3.h`, `imgui_impl_opengl3.cpp`
-   - Purpose: Provides the GUI framework for the interpreter, including windows, buttons, labels, sliders, checkboxes, and other UI elements.
-   - Notes: 
-     - `imconfig.h` is required by ImGui but can be empty.  
-     - Backends are configured for GLFW + OpenGL3.  
-     - To update, replace the above files with the latest versions from the ImGui repository and ensure `imconfig.h` exists.
+3. [Dear ImGui](https://github.com/ocornut/imgui): MIT License  
+  Copyright (c) 2014-2023 Omar Cornut
 
-4. [GLAD](https://github.com/Dav1dde/glad) — MIT License  
-   - Copyright (c) 2015-2023 David Herberth  
-   - Files included in this project:
-     - `glad.c`, `glad.h`, `khrplatform.h`  
-   - Purpose: Provides OpenGL function loading for cross-platform support, used by the OpenGL backend of ImGui.
-   - Notes:
-     - Ensure `glad.h` is included **before** any system OpenGL headers (e.g., `<GL/gl.h>`).  
-     - Can be updated by downloading the latest version from the GLAD web service or GitHub repository.
+4. [GLAD](https://github.com/Dav1dde/glad): MIT License  
+  Copyright (c) 2015-2023 David Herberth
 
-5. [libpqxx](https://github.com/jtv/libpqxx) — BSD 3-Clause License  
-   - Copyright (c) 2000-2026 Jeroen T. Vermeulen  
-   - Files dynamically linked at build time (no source code included).  
-   - Purpose: Provides a modern C++ client API for PostgreSQL, enabling database connectivity, prepared statements, and transaction support in the interpreter.  
-   - Notes:  
-     - libpqxx depends on `libpq` (the official PostgreSQL client library).  
-     - To install on Linux: `sudo apt install libpqxx-dev libpq-dev`  
-     - Linked with `-lpqxx -lpq` during build.  
+5. [libpqxx](https://github.com/jtv/libpqxx): BSD 3-Clause License  
+  Copyright (c) 2000-2026 Jeroen T. Vermeulen  
 
-6. [PostgreSQL Client Library (libpq)](https://www.postgresql.org/) — BSD 3-Clause License  
-   - Copyright (c) 1996-2026 The PostgreSQL Global Development Group  
-   - Files dynamically linked at build time (no source code included).  
-   - Purpose: Provides the low-level client interface used internally by libpqxx for communication with PostgreSQL databases.  
-   - Notes:  
-     - libpq is distributed as part of the PostgreSQL project.  
-     - Can be obtained from official PostgreSQL packages or source distributions.
+6. [PostgreSQL Client Library (libpq)](https://www.postgresql.org/): BSD 3-Clause License  
+  Copyright (c) 1996-2026 The PostgreSQL Global Development Group
