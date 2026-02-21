@@ -13,9 +13,9 @@ CFLAGS   ?= -O2
 LDFLAGS  ?= -lglfw -lGL -ldl -lpthread -lpqxx -lpq -lsqlite3
 
 # Uncomment to enable AddressSanitizer
-CXXFLAGS += -fsanitize=address
-CFLAGS   += -fsanitize=address
-LDFLAGS  += -fsanitize=address
+#CXXFLAGS += -fsanitize=address
+#CFLAGS   += -fsanitize=address
+#LDFLAGS  += -fsanitize=address
 
 # -------------------------
 # Target

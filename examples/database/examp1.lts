@@ -8,9 +8,27 @@ start
 	indb = 0
 	in_database; indb
 	display; indb "\n"
+
+	begin_transaction;
+	prepare_statement; "CREATE TABLE IF NOT EXISTS msg ( txt VARCHAR(100) );"
+	execute_statement;
+	prepare_statement; "INSERT INTO msg VALUES ('Hello World');"
+	execute_statement;
+	str = ""
+	get_last_database_error; str
+	display; str "\n"
+
 	prepare_statement; "SELECT * FROM msg;"
 	container res
 	execute_statement; res
+	n = 0
+	res num -> n
+	display; n "\n"
 	json = ""
 	container_to_json; res json
 	display; "Query:" "\n" json "\n"
+
+	prepare_statement; "DROP TABLE msg;"
+	execute_statement;
+	$ If there is already a msg table prior to executing this LTS file, it should remain intact.
+	rollback_transaction;

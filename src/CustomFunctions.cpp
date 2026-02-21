@@ -3127,7 +3127,7 @@ void Database::SQLite::begin_transaction () {
         exit(1);
     }
     char* err = nullptr;
-    if (sqlite3_exec(db, "BEGIN_TRANSACTION;", nullptr, nullptr, nullptr) != SQLITE_OK) {
+    if (sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr) != SQLITE_OK) {
         string err = sqlite3_errmsg(db);
         cerr << "database: SQLite begin failed, " << err << endl;
         exit(1);
@@ -3231,6 +3231,7 @@ map<Key,any> Database::SQLite::execute () {
             }
         }
         results[Key{row}] = resultRow;
+        row++;
     }
     if (rc != SQLITE_DONE) {
         lastErr = sqlite3_errmsg(db);
