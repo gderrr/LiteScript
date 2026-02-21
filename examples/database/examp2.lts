@@ -3,8 +3,14 @@ $ We will also make use of the network module to serialize
 $ containers to string JSON for easy visualization
 import network
 
+$ Test done with docker test postgres db
+$ docker run --name pg-test -e POSTGRES_PASSWORD=testpass -e POSTGRES_USER=testuser -e POSTGRES_DB=testdb -p 5432:5432 -d postgres
+
 start
-	open_database; "minidb.db"
+	indb = 0
+	in_database; indb
+	display; indb "\n"
+	open_database; "localhost" "testuser" "testpass" "testdb"
 	indb = 0
 	in_database; indb
 	display; indb "\n"
@@ -18,12 +24,13 @@ start
 	get_last_database_error; str
 	display; str "\n"
 
-	$ SQLITE WAY
-	prepare_statement; "SELECT * FROM msg m WHERE m.txt = ?;"
+	$ POSTGRES WAY
+	prepare_statement; "SELECT * FROM msg m WHERE m.txt=$1;"
 	bind_statement; 1 "Hello World"
 	container res
 	execute_statement; res
-	
+	get_last_database_error; str
+	display; str "\n"
 	n = 0
 	res num -> n
 	display; n "\n"
@@ -33,5 +40,4 @@ start
 
 	prepare_statement; "DROP TABLE msg;"
 	execute_statement;
-	$ If there is already a msg table prior to executing this LTS file, it should remain intact.
-	rollback_transaction;
+	commit_transaction;

@@ -3343,9 +3343,9 @@ map<Key,any> Database::PostgreSQL::execute () {
                 cerr << "database: Too many arguments for PostgreSQL prepared statement." << endl;
                 exit(1);
         }
+        int r = 0;
         for (const auto& row : result) {
             map<Key,any> resultRow;
-            int r = 0;
             for (pqxx::row::size_type i = 0; i < result.columns(); ++i) {
                 string col = result.column_name(i);
                 pqxx::oid type = row[col].type();
