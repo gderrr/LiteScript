@@ -1,0 +1,44 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+:root {
+  /* Lime-on-black theme */
+  --ifm-color-primary: #00ff00;
+  --ifm-background-color: #000000;
+  --ifm-font-family-base: 'Fira Code', monospace;
+  --ifm-font-family-monospace: 'Fira Code', monospace;
+}
+
+body {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+h1, h2, h3 {
+  background-color: #00ff00;
+  color: #000000;
+  font-family: 'Orbitron', sans-serif;
+  border-radius: 6px;
+  padding: 6px;
+}
+
+code, pre {
+  background-color: #111111;
+  color: #00ff00;
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.footer {
+  background-color: #222222 !important;
+  color: #00ff00 !important;
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: 30px;
+  padding:30px;
+}
