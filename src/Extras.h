@@ -6,6 +6,7 @@
 #include <memory>
 #include <any>
 #include <variant>
+#include <stdexcept>
 #include "mutex_map.h"
 
 // Header for globalVariables so they can be used anywhere
@@ -25,3 +26,10 @@ struct Key {
     std::variant<int, float, std::string> value;
     bool operator< (const Key& other) const;
 };
+
+template <typename T> T key_cast(const Key& key) {
+    if (std::holds_alternative<T>(key.value))
+        return std::get<T>(key.value);
+    // Throws bad_any_cast to line up with interpreter error msgs
+    throw std::bad_any_cast();
+}

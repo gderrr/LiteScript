@@ -1901,27 +1901,40 @@ bool Network::execute (const string& function, vector<any>& args) {
                     copy.args = { reqCont };
                     any result = copy.runInterpret();
 
-                    int status = 200;
-                    string body;
-                    string content_type = "text/plain";
                     if (result.has_value()) {
                         // In the case where we are returning a simple string, handle it as a base case
-                        if (result.type() == typeid(string)) body = any_cast<string>(result);
+                        if (result.type() == typeid(string)) {
+                            res.status = 200;
+                            string body = any_cast<string>(result);
+                            res.set_content(body, "text/plain");
+                        }
                         // Otherwise, only accept LTS containers with a valid response structure
                         else {
+                            /* returnContainer:
+                            *    "result" = INTEGER
+                            *    "body" = STRING
+                            *    "headers":
+                            *      "HEADER1" = STRING
+                            *      ...
+                            */
                             map<Key, any> resCont = any_cast<map<Key,any>>(result);
-                            status = any_cast<int>(resCont.at(Key{string("status")}));
-                            content_type = any_cast<string>(resCont.at(Key{string("content_type")}));
-                            body = any_cast<string>(resCont.at(Key{string("body")}));
+                            res.status = any_cast<int>(resCont.at(Key{string("status")}));
+                            res.body = any_cast<string>(resCont.at(Key{string("body")}));
+                            map<Key, any> hdrs = any_cast<map<Key,any>>(resCont.at(Key{string("headers")}));
+                            httplib::Headers headers;
+                            for (auto& [k, v] : hdrs) {
+                                string ks = key_cast<string>(k);
+                                string vs = any_cast<string>(v);
+                                headers.emplace(ks,vs);
+                            }
+                            res.headers = headers;
                         }
-                        res.status = status;
-                        res.set_content(body, content_type);
                     }
                 };
 
                 if (method == "GET") srv->server.Get(path, callback);
                 else if (method == "POST") srv->server.Post(path, callback);
-                else if (method == "PUT") srv->server.Put(path, callback);
+                else if (method == "PATCH") srv->server.Patch(path, callback);
                 else if (method == "DELETE") srv->server.Delete(path, callback);
             }
 
@@ -1935,79 +1948,163 @@ bool Network::execute (const string& function, vector<any>& args) {
         return true;
     }
     else if (function == "http_get;") {
-        if (args.size() != 3) IncorrectNumArguments();
+        if (args.size() != 3 && args.size() != 5) IncorrectNumArguments();
         // === START DEFINITION ===
 
-        auto& a = args[0];
-        auto& b = args[1];
-        auto& c = args[2];
-        string& url = any_cast<reference_wrapper<string>&>(a).get();
-        string& path = any_cast<reference_wrapper<string>&>(b).get();
-        string& dst = any_cast<reference_wrapper<string>&>(c).get();
+        string& url = ref_get<string>(args[0]);
+        string& path = ref_get<string>(args[1]);
+        string& dst = ref_get<string>(args[2]);
         httplib::Client cli(url.c_str());
-        if (auto res = cli.Get(path.c_str())) dst = res->body;
-        else dst.clear();
+        if (args.size() == 3) {
+            if (auto res = cli.Get(path.c_str())) dst = res->body;
+            else dst.clear();
+        }
+        else {
+            map<Key,any> prms = ref_get<map<Key,any>>(args[3]);
+            map<Key,any> hdrs = ref_get<map<Key,any>>(args[4]);
+            httplib::Params params;
+            httplib::Headers headers;
+            for (auto& [k, v] : prms) {
+                string ks = key_cast<string>(k);
+                string vs = any_cast<string>(v);
+                params.emplace(ks,vs);
+            }
+            for (auto& [k, v] : hdrs) {
+                string ks = key_cast<string>(k);
+                string vs = any_cast<string>(v);
+                headers.emplace(ks,vs);
+            }
+            if (auto res = cli.Get(path.c_str(), params, headers)) dst = res->body;
+            else dst.clear();
+        }
 
         // === END DEFINITION ===
 
         return true;
     }
     else if (function == "http_post;") {
-        if (args.size() < 3) IncorrectNumArguments();
+        if (args.size() != 3 && args.size() != 5) IncorrectNumArguments();
         // === START DEFINITION ===
 
-        auto& a = args[0];
-        auto& b = args[1];
-        auto& c = args[2];
-        string& url = any_cast<reference_wrapper<string>&>(a).get();
-        string& path = any_cast<reference_wrapper<string>&>(b).get();
-        string& body = any_cast<reference_wrapper<string>&>(c).get();
+        string& url = ref_get<string>(args[0]);
+        string& path = ref_get<string>(args[1]);
+        string& body = ref_get<string>(args[2]);
         string contentType = "text/plain";
-        if (args.size() == 4) {
-            auto& d = args[3];
-            string& ct = any_cast<reference_wrapper<string>&>(d).get();
-            contentType = ct;
-        }
         httplib::Client cli(url.c_str());
-        auto res = cli.Post(path.c_str(), body, contentType);
+        if (args.size() == 3) {
+            auto res = cli.Post(path.c_str(), body, contentType);
+        }
+        else {
+            map<Key,any> prms = ref_get<map<Key,any>>(args[3]);
+            map<Key,any> hdrs = ref_get<map<Key,any>>(args[4]);
+            string fullPath = path;
+            httplib::Headers headers;
+            if (!prms.empty()) {
+                fullPath += "?";
+                bool first = true;
+                for (auto& [k, v] : prms) {
+                    if (!first) fullPath += "&";
+                    string ks = key_cast<string>(k);
+                    string vs = any_cast<string>(v);
+                    fullPath += ks + "=" + vs;
+                    first = false;
+                }
+            }
+            for (auto& [k, v] : hdrs) {
+                string ks = key_cast<string>(k);
+                string vs = any_cast<string>(v);
+                if (ks == "Content-Type") {
+                    contentType = vs;
+                }
+                else {
+                    headers.emplace(ks,vs);
+                }
+            }
+            auto res = cli.Post(fullPath.c_str(), headers, body, contentType);
+        }
 
         // === END DEFINITION ===
 
         return true;
     }
-    else if (function == "http_put;") {
-        if (args.size() < 3) IncorrectNumArguments();
+    else if (function == "http_patch;") {
+        if (args.size() != 3 && args.size() != 5) IncorrectNumArguments();
         // === START DEFINITION ===
 
-        auto& a = args[0];
-        auto& b = args[1];
-        auto& c = args[2];
-        string& url = any_cast<reference_wrapper<string>&>(a).get();
-        string& path = any_cast<reference_wrapper<string>&>(b).get();
-        string& body = any_cast<reference_wrapper<string>&>(c).get();
+        string& url = ref_get<string>(args[0]);
+        string& path = ref_get<string>(args[1]);
+        string& body = ref_get<string>(args[2]);
         string contentType = "text/plain";
-        if (args.size() == 4) {
-            auto& d = args[3];
-            string& ct = any_cast<reference_wrapper<string>&>(d).get();
-            contentType = ct;
-        }
         httplib::Client cli(url.c_str());
-        auto res = cli.Put(path.c_str(), body, contentType);
+        if (args.size() == 3) {
+            auto res = cli.Patch(path.c_str(), body, contentType);
+        }
+        else {
+            map<Key,any> prms = ref_get<map<Key,any>>(args[3]);
+            map<Key,any> hdrs = ref_get<map<Key,any>>(args[4]);
+            string fullPath = path;
+            httplib::Headers headers;
+            if (!prms.empty()) {
+                fullPath += "?";
+                bool first = true;
+                for (auto& [k, v] : prms) {
+                    if (!first) fullPath += "&";
+                    string ks = key_cast<string>(k);
+                    string vs = any_cast<string>(v);
+                    fullPath += ks + "=" + vs;
+                    first = false;
+                }
+            }
+            for (auto& [k, v] : hdrs) {
+                string ks = key_cast<string>(k);
+                string vs = any_cast<string>(v);
+                if (ks == "Content-Type") {
+                    contentType = vs;
+                }
+                else {
+                    headers.emplace(ks,vs);
+                }
+            }
+            auto res = cli.Patch(fullPath.c_str(), headers, body, contentType);
+        }
 
         // === END DEFINITION ===
 
         return true;
     }
     else if (function == "http_delete;") {
-        if (args.size() != 2) IncorrectNumArguments();
+        if (args.size() != 2 && args.size() != 4) IncorrectNumArguments();
         // === START DEFINITION ===
 
-        auto& a = args[0];
-        auto& b = args[1];
-        string& url = any_cast<reference_wrapper<string>&>(a).get();
-        string& path = any_cast<reference_wrapper<string>&>(b).get();
+        string& url = ref_get<string>(args[0]);
+        string& path = ref_get<string>(args[1]);
         httplib::Client cli(url.c_str());
-        auto res = cli.Delete(path.c_str());
+        if (args.size() == 2) {
+            auto res = cli.Delete(path.c_str());
+        }
+        else {
+            map<Key,any> prms = ref_get<map<Key,any>>(args[2]);
+            map<Key,any> hdrs = ref_get<map<Key,any>>(args[3]);
+            string fullPath = path;
+            httplib::Headers headers;
+            if (!prms.empty()) {
+                fullPath += "?";
+                bool first = true;
+                for (auto& [k, v] : prms) {
+                    if (!first) fullPath += "&";
+                    string ks = key_cast<string>(k);
+                    string vs = any_cast<string>(v);
+                    fullPath += ks + "=" + vs;
+                    first = false;
+                }
+            }
+            for (auto& [k, v] : hdrs) {
+                string ks = key_cast<string>(k);
+                string vs = any_cast<string>(v);
+                headers.emplace(ks,vs);
+            }
+            auto res = cli.Delete(fullPath.c_str(), headers);
+        }
 
         // === END DEFINITION ===
 
