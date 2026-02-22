@@ -11,8 +11,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'LiteScript',
-  tagline: 'A powerful toy language',
-  favicon: 'img/favicon.ico',
+  tagline: 'A powerful toy programming language.',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -84,7 +83,7 @@ const config = {
       },
       footer: {
         style: 'dark',
-        copyright: `Copyright © ${new Date().getFullYear()} LiteScript. All rights reserved.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Hadeer Abbas Khalil Wysocka. All rights reserved.`,
       },
       prism: {
         theme: prismThemes.github,
