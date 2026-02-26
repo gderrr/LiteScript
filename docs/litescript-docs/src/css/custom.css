@@ -27,7 +27,7 @@ h1, h2, h3 {
 
 code, pre {
   background-color: #111111;
-  color: #00ff00;
+  color: #dddddd;
   border-radius: 6px;
   padding: 6px;
 }
@@ -57,6 +57,6 @@ code, pre {
 }
 
 #desc {
-  border-radius: 10px;
-  padding: 10px;
+  border-radius: 20px;
+  padding: 20px;
 }
