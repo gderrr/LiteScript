@@ -60,3 +60,8 @@ code, pre {
   border-radius: 20px;
   padding: 20px;
 }
+
+.table-of-contents {
+  font-size: 1rem;        /* default ~0.875rem, increase as you like */
+  line-height: 1.6;
+}
