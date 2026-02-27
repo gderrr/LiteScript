@@ -2,22 +2,68 @@ import React from 'react';
 import { Highlight, Prism, themes } from 'prism-react-renderer';
 
 Prism.languages.litescript = {
-    comment: /\$.*$/m,
-    keyword: /\b(opt|conditional|loop|return|exit|start|import|require|container|global)\b/,
-    number: /\b\d+(?:\.\d+)?\b/,
-    operator: /\|\||&&|\||\^|&|=|\+=|-=|==|!=|<=|<|>=|>|<<|>>|\+|-|\*\*|\*|\/|%|!|~/,
-    string: {
-        pattern: /"(?:\\[nrt0"\\]|[^"\\])*"/,
-        greedy: true,
+  'comment': {
+    pattern: /\$.*$/,
+    greedy: true
+  },
+  'keyword': {
+    pattern: /\b(opt|conditional|loop|return|exit|start|import|require)\b/,
+    greedy: true
+  },
+  'number': {
+    pattern: /\b\d+(?:\.\d+)?\b/,
+    greedy: true
+  },
+  'operator': {
+    pattern: /(\|\||&&|\||\^|&|=|\+=|-=|==|!=|<=|<|>=|>|<<|>>|\+|-|\*\*|\*|\/|%|!|~)/,
+    greedy: true
+  },
+  'string': {
+    pattern: /"(?:(?:\\.)|[^"\\])*"/,
+    greedy: true,
+    inside: {
+      'escape': {
+        pattern: /\\[nrt0"\\]/,
+        alias: 'constant'
+      },
+      'invalid': {
+        pattern: /\\./,
+        alias: 'error'
+      },
+      'punctuation': {
+        pattern: /^"|"$/,
+        alias: 'punctuation'
+      }
+    }
+  },
+  'class-name': {
+    pattern: /\b(container|global)\b/,
+    greedy: true
+  },
+  'function': [
+    {
+      // container functions like get, put, del...
+      pattern: /\b(get|put|del|top|end|psh|pop|deq|num|igtk|igtv)\b/,
+      alias: 'builtin'
     },
-    function: /\b(get|put|del|top|end|psh|pop|deq|num|igtk|igtv)\b/,
-    'function-call': /\b\w+:/,
-    'function-declaration': {
-        pattern: /^(?!\t).+$/m,
-        alias: 'function',
+    {
+      // invocation pattern e.g., myFunc:
+      pattern: /\b\w+:/,
+      alias: 'symbol'
     },
-    className: /\b\w+;/,
-    variable: /\b[A-Za-z_][\w]*\b/,
+    {
+      // top-level declarations (non-indented lines)
+      pattern: /^[A-Za-z_]\w*/m,
+      alias: 'declaration'
+    }
+  ],
+  'symbol': {
+    pattern: /\b\w+;/,
+    alias: 'class-name'
+  },
+  'variable': {
+    pattern: /\b[A-Za-z_]\w*\b/
+  }
 };
 
 export default function CodeBlockLTS({ children }) {
