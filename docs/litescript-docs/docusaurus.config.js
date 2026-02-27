@@ -56,7 +56,6 @@ const config = {
       }),
     ],
   ],
-  clientModules: [require.resolve('./src/prism/litescript.js')],
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
