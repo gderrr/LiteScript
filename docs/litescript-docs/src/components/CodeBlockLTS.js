@@ -42,17 +42,14 @@ Prism.languages.litescript = {
   },
   'function': [
     {
-      // container functions like get, put, del...
       pattern: /\b(get|put|del|top|end|psh|pop|deq|num|igtk|igtv)\b/,
       alias: 'builtin'
     },
     {
-      // invocation pattern e.g., myFunc:
       pattern: /\b\w+:/,
       alias: 'symbol'
     },
     {
-      // top-level declarations (non-indented lines)
       pattern: /^[A-Za-z_]\w*/m,
       alias: 'declaration'
     }
