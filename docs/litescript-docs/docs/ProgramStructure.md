@@ -4,4 +4,6 @@ sidebar_position: 1
 
 # 1. Program Structure
 
-a.
+```litescript
+fn let return if else
+```

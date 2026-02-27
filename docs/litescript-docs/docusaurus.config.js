@@ -10,8 +10,8 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'LiteScript',
-  tagline: 'A powerful toy programming language.',
+  title: 'LTSReference',
+  tagline: 'The official LTS programming language reference.',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -56,7 +56,7 @@ const config = {
       }),
     ],
   ],
-
+  clientModules: [require.resolve('./src/prism/litescript.js')],
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({

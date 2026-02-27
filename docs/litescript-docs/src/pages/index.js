@@ -13,9 +13,9 @@ function HomepageHeader() {
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container">
         <Heading as="h1" className="hero__title">
-          {siteConfig.title}
+          {`LiteScript`}
         </Heading>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
+        <p className="hero__subtitle">{`A powerful toy programming language.`}</p>
       </div>
     </header>
   );
@@ -25,7 +25,7 @@ export default function Home() {
   const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      title={`Reference`}
+      title={`Introduction`}
       description="">
       <HomepageHeader />
       <main>
