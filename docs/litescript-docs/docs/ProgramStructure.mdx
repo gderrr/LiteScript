@@ -5,3 +5,116 @@ import CodeBlockLTS from '@site/src/components/CodeBlockLTS';
 
 # 2. Program Structure
 
+LiteScript programs follow a certain structure to ensure a correct and predictable execution
+flow, defining a set of rules that each program needs to follow.
+
+## 2.1 Relevant Keywords
+
+For defining the program structure, along with any modules and external dependencies, there is a 
+set of keywords that all work together to make a LiteScript program executable.
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "start" keyword.
+</p>
+
+<CodeBlockLTS>start</CodeBlockLTS>
+
+Denotes the global entry point for a LiteScript program (just like the main function in many 
+languages), this is where interpreter starts executing code. It works just like a function,
+having a special reserved keyword for it.
+
+The start keyword **must be located  in the file that is directly being called by the 
+interpreter**, not doing so may result in undefined behavior.
+
+Any arguments passed when calling the interpreter will be available here.
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "import" keyword.
+</p>
+
+<CodeBlockLTS>import [module1] [module2] ...</CodeBlockLTS>
+
+Imports and activates any of the available modules integrated into the interpreter, allowing
+their special module functions to be available for use. Any module imports referenced in external
+dependencies will also be included, if they are multiple imports of a same module, it is not
+imported more than once.
+
+**You can put import statements on any line, but it is best practice to put them at the top of the
+file.**
+
+You can import modules either on the same import statement, or in multiple:
+
+<CodeBlockLTS>import module1 module2</CodeBlockLTS>
+<CodeBlockLTS>
+```
+import module1
+import module2
+```
+</CodeBlockLTS>
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "require" keyword.
+</p>
+
+<CodeBlockLTS>require [file1] [file2] ...</CodeBlockLTS>
+
+There's a separate keyword for including/importing other LiteScript files, which we call external
+dependencies. Groups together all the functions, module imports and external dependencies and
+"intuitively" pastes them into the same file, making all the functions and modules in the require
+chain available, if they are multiple imports of a same file, it is not imported more than once.
+
+You must provide an absolute or relative path to a filename, or just the filename if it is in the
+same working directory as the context where you are calling the interpreter, otherwise it will result
+in a parsing stage error.
+
+**You can put require statements on any line, but it is best practice to put them at the top of the
+file.**
+
+You can import files either on the same require statement, or in multiple:
+
+<CodeBlockLTS>require file1 file2</CodeBlockLTS>
+<CodeBlockLTS>
+```
+require file1
+require file2
+```
+</CodeBlockLTS>
+
+## 2.2 Indentation and Scoping
+
+Like Python, LiteScript **depends on strict indentation with true tabs** to represent
+different scopes or blocks of code, if true tabs aren't used then the program can't run correctly.
+In the [repository](https://github.com/gderrr/LiteScript), you can find a VSCode extension that
+(along with syntax highlighting) insures that when you hit tab, then always only true tabs are 
+inserted instead of spaces, correctly using indentation.
+
+Different levels of indentation indicate different scopes, variables that go out of scope are
+effectively erased and need to be redeclared if used again. Scopes are used in function 
+definitions (including the start keyword) and in control flow statements.
+
+Unlike in other dynamic scripting languages, the global scope is non-existent in LiteScript, and
+**lines with no indentation (indentation level zero), are reserved exclusively for import and
+require statements, function names, and the start keyword.**
+
+## 2.3 Program Template
+
+With all the previous rules set, we provide the following template used recurringly across almost
+all LiteScript programs, which can be used as a standard for best practices:
+
+<CodeBlockLTS>
+```
+import ...
+require ...
+
+FUNCTION1
+    ...
+
+...
+
+start
+    ...
+```
+</CodeBlockLTS>
+
+With all declarative statements defined at lines with no indentation (indentation level 0), and all
+procedural code starting with indentation (indentation level 1+).
