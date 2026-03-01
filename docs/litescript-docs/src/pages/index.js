@@ -81,7 +81,7 @@ export default function Home() {
           will <strong>never support Object-Oriented Programming</strong>. Everything that requires the program to handle
           mutable states and custom objects will be handled implicitly by the interpreter's runtime.
         </p> 
-        <h1>Runtime</h1>
+        <h1>Interpreter</h1>
         <p>
           LiteScript is executed with its own interpreter, called 'Lite'. To install it, just follow
           the installation steps found in the <a href="https://github.com/gderrr/LiteScript">LiteScript repository</a>.
