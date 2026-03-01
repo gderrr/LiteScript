@@ -4,3 +4,92 @@ sidebar_position: 4
 import CodeBlockLTS from '@site/src/components/CodeBlockLTS';
 
 # 3. Data Types
+
+The way LiteScript handles data types is pretty unconventional when comparing with other languages
+but it is designed that way to make heavy use of simple data types as polymorphically and 
+generalized as possible.
+
+## 3.1 Primitive Data Types
+
+The different data types are designed to be as primitive as possible to satisfy backwards
+compatibility with legacy 32 bit era software, which is limiting but should be enough to satisfy
+LiteScript's purpose of running small scripts.
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "integer" data type
+</p>
+
+In LiteScript, the integer data type is implemented as a 32 bit signed integer, meaning that its
+**minimum value is -2,147,483,648** and its **minimum value is 2,147,483,647**, which is enough
+for the language's functionalities.
+
+To declare an integer in an expression, all you need to do is provide a regular numeric value without
+a decimal ('.'), and the interpreter will recognize it as an integer.
+
+<CodeBlockLTS>
+0
+1
+2100000000
+-1234
+</CodeBlockLTS>
+
+The integer data type allows all arithmetic operations like addition, subtraction (unary and binary), 
+multiplication, division, modulus, and bit-wise logic (AND, OR, NOT, XOR, LSHIFT, RSHIFT).
+
+LiteScript **doesn't natively support boolean values**, instead, the most common substitute is to use
+the integer data type (just like in C), where 0 evaluates to false and any value different from 0
+evaluates to true.
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "real" data type
+</p>
+
+In LiteScript, the real data type is implemented as a 32 bit floating point number, meaning that 
+the interval it spans is approximately: [-3.4x10^38, -1.176x10^-38] U [1.176x10^-38, 3.4x10^38],
+as per the [IEEE floating point standard](https://en.wikipedia.org/wiki/IEEE_754).
+
+To declare a real in an expression, all you need to do is provide a numeric value with a decimal 
+('.'), and the interpreter will recognize it as an real.
+
+<CodeBlockLTS>
+0.0
+1.0
+273000.545789
+-0.000012
+</CodeBlockLTS>
+
+The real data type allows almost all arithmetic operations: addition, subtraction (unary and binary), 
+multiplication, division, and some additional operations unique to this data type, like logarithmation
+and exponentiation.
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "string" data type
+</p>
+
+In LiteScript, the string data type is implemented as a byte string, meaning that it can hold a variable
+number of ASCII characters (including special characters) as well as hold raw unicode bytes, although it is
+not natively supported.
+
+To declare a string in an expression, all you need to do is provide a string of characters in 
+between quotes ("), just like any other programming language that supports them.
+
+<CodeBlockLTS>
+""
+"Hello World!"
+"\r\n"
+"😊"
+</CodeBlockLTS>
+
+The string data type only has support for one operation: concatenation with plus signs ('+'), and
+it can hold a subset of special ASCII characters:
+
+- Null byte character (\0).
+- New line character (\n).
+- Carriage return character (\r).
+- Backslash character (\\\\).
+- Quote character (\\").
+
+LiteScript **doesn't natively support a primitive character data type**, so single characters are represented
+with strings.
+
+## 3.2 Containers
