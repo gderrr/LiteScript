@@ -14,7 +14,7 @@ For defining the program structure, along with any modules and external dependen
 set of keywords that all work together to make a LiteScript program executable.
 
 <p style={{ fontSize: "1.5rem" }}>
-- The "start" keyword.
+- The "start" keyword
 </p>
 
 <CodeBlockLTS>start</CodeBlockLTS>
@@ -29,7 +29,7 @@ interpreter**, not doing so may result in undefined behavior.
 Any arguments passed when calling the interpreter will be available here.
 
 <p style={{ fontSize: "1.5rem" }}>
-- The "import" keyword.
+- The "import" keyword
 </p>
 
 <CodeBlockLTS>import [module1] [module2] ...</CodeBlockLTS>
@@ -53,7 +53,7 @@ import module2
 </CodeBlockLTS>
 
 <p style={{ fontSize: "1.5rem" }}>
-- The "require" keyword.
+- The "require" keyword
 </p>
 
 <CodeBlockLTS>require [file1] [file2] ...</CodeBlockLTS>
@@ -95,6 +95,20 @@ definitions (including the start keyword) and in control flow statements.
 Unlike in other dynamic scripting languages, the global scope is non-existent in LiteScript, and
 **lines with no indentation (indentation level zero), are reserved exclusively for import and
 require statements, function names, and the start keyword.**
+
+<CodeBlockLTS>
+```
+start
+	Scope 1
+
+	Control flow statement
+		Scope 2
+		
+		...
+	
+	Back to Scope 1
+```
+</CodeBlockLTS>
 
 ## 2.3 Program Template
 
