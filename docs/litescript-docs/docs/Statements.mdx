@@ -4,3 +4,303 @@ sidebar_position: 5
 import CodeBlockLTS from '@site/src/components/CodeBlockLTS';
 
 # 4. Statements
+
+Like previously mentioned, LiteScript simplifies the statement model into a fixed-form model that
+allows for its parsing and evaluation to be simple and straight forward, so it is important to be
+aware of what can and cannot be done.
+
+## 4.1 Assigners and Expressions
+
+Just like assembly, for assignment statements where we either declare a variable or reassign its
+value, we derive the assembly movement instruction into the following fixed form:
+
+<CodeBlockLTS>
+```
+    [variable] [assigner] [expression]
+```
+</CodeBlockLTS>
+
+A variable is declared when it is first mentioned in an assignment statement, and recurring mentions
+simply just reassign its value.
+
+<CodeBlockLTS>
+```
+    First declared
+    x [assigner] expression1
+
+    Value reassigned
+    x [assigner] expression2
+```
+</CodeBlockLTS>
+
+When it comes to value reassignments, since LiteScript is a dynamically typed programming language,
+a variable's type **can be changed during runtime** from one type to another. So if expression1
+evaluates to an integer, x is declared as an integer type, and if expression2 evaluates to a string,
+then x has its value reassigned and its type changed to a string.
+
+In LiteScript there are only three basic assigners:
+
+- **Equality assigner (=):** Simply sets the variable's value and type to whatever the expression evaluates
+to. Compatible with every primitive data type and containers.
+
+- **Incremental assigner (+=):** Equivalent to x = x + expression. Evaluates the expression, and performs the
+addition of the expression's corresponding type with the same variable, therefore, the variable needs to
+have been declared prior to this. Compatible with every primitive data.
+
+- **Decremental assigner (-=):** Equivalent to x = x - expression. Evaluates the expression, and performs the
+subtraction of the expression's corresponding type with the same variable, therefore, the variable needs to
+have been declared prior to this. Compatible only with integers and reals.
+
+### 4.1.1 Expressions and Operators
+
+In LiteScript, expressions are evaluated rather unconventionally. Instead of evaluating a parsed AST, the
+expression instead gets converted to postfix and evaluated using the Shunting Yard Algorithm, so any rules
+and evaluation orders applied to these will be applied to every LiteScript expression.
+
+Unlike C, there is no lazy evaluation, so expressions that are supposed to represent boolean values are
+evaluated in its entirety.
+
+In the following table, we describe every operator that can be used in an expression, including what it
+evaluates (expressed either in C like pseudocode, or text), the precedence value (lower values indicate lesser precedence) 
+and if it is unary, binary or both; for every primitive data type and ordered by ascending precedence.
+
+<table>
+  <thead>
+    <tr>
+      <th>Operator</th>
+      <th>Symbol</th>
+      <th>Precedence</th>
+      <th>Unary/Binary</th>
+      <th>Integer</th>
+      <th>Real</th>
+      <th>String</th>
+      <th>Evaluates to</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Logical OR</td>
+      <td>||</td>
+      <td>1</td>
+      <td>Binary</td>
+      <td>(a != 0 || b != 0) ? 1 : 0</td>
+      <td>-</td>
+      <td>-</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Logical AND</td>
+      <td>&&</td>
+      <td>2</td>
+      <td>Binary</td>
+      <td>(a != 0 && b != 0) ? 1 : 0</td>
+      <td>-</td>
+      <td>-</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Bitwise OR</td>
+      <td>|</td>
+      <td>3</td>
+      <td>Binary</td>
+      <td>a | b</td>
+      <td>-</td>
+      <td>-</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Bitwise XOR</td>
+      <td>^</td>
+      <td>4</td>
+      <td>Binary</td>
+      <td>a ^ b</td>
+      <td>-</td>
+      <td>-</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Bitwise AND</td>
+      <td>&</td>
+      <td>5</td>
+      <td>Binary</td>
+      <td>a & b</td>
+      <td>-</td>
+      <td>-</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Equals</td>
+      <td>==</td>
+      <td>6</td>
+      <td>Binary</td>
+      <td>(a == b) ? 1 : 0</td>
+      <td>(a == b) ? 1 : 0</td>
+      <td>(a == b) ? 1 : 0</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Not equals</td>
+      <td>!=</td>
+      <td>6</td>
+      <td>Binary</td>
+      <td>(a != b) ? 1 : 0</td>
+      <td>(a != b) ? 1 : 0</td>
+      <td>(a != b) ? 1 : 0</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Less than</td>
+      <td>&lt;</td>
+      <td>7</td>
+      <td>Binary</td>
+      <td>(a &lt; b) ? 1 : 0</td>
+      <td>(a &lt; b) ? 1 : 0</td>
+      <td>(a &lt; b) ? 1 : 0</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Less or equal than</td>
+      <td>&lt;=</td>
+      <td>7</td>
+      <td>Binary</td>
+      <td>(a &lt;= b) ? 1 : 0</td>
+      <td>(a &lt;= b) ? 1 : 0</td>
+      <td>(a &lt;= b) ? 1 : 0</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Greater than</td>
+      <td>&gt;</td>
+      <td>7</td>
+      <td>Binary</td>
+      <td>(a &gt; b) ? 1 : 0</td>
+      <td>(a &gt; b) ? 1 : 0</td>
+      <td>(a &gt; b) ? 1 : 0</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Greater or equal than</td>
+      <td>&gt;=</td>
+      <td>7</td>
+      <td>Binary</td>
+      <td>(a &gt;= b) ? 1 : 0</td>
+      <td>(a &gt;= b) ? 1 : 0</td>
+      <td>(a &gt;= b) ? 1 : 0</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Bitwise Left Shift</td>
+      <td>&lt;&lt;</td>
+      <td>8</td>
+      <td>Binary</td>
+      <td>a &lt;&lt; b</td>
+      <td>-</td>
+      <td>-</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Bitwise Right Shift (signed)</td>
+      <td>&gt;&gt;</td>
+      <td>8</td>
+      <td>Binary</td>
+      <td>a &gt;&gt; b</td>
+      <td>-</td>
+      <td>-</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Addition</td>
+      <td>+</td>
+      <td>9</td>
+      <td>Binary</td>
+      <td>Integer addition</td>
+      <td>Floating point addition (if at least one is a real)</td>
+      <td>Concatenation</td>
+      <td>Integer/Real/String</td>
+    </tr>
+    <tr>
+      <td>Subtraction</td>
+      <td>-</td>
+      <td>9</td>
+      <td>Both</td>
+      <td>Integer subtraction</td>
+      <td>Floating point subtraction (if at least one is a real)</td>
+      <td>-</td>
+      <td>Integer/Real</td>
+    </tr>
+    <tr>
+      <td>Multiplication</td>
+      <td>*</td>
+      <td>10</td>
+      <td>Binary</td>
+      <td>Integer multiplication</td>
+      <td>Floating point multiplication (if at least one is a real)</td>
+      <td>-</td>
+      <td>Integer/Real</td>
+    </tr>
+    <tr>
+      <td>Division</td>
+      <td>/</td>
+      <td>10</td>
+      <td>Binary</td>
+      <td>Integer multiplication</td>
+      <td>Floating point multiplication (if at least one is a real)</td>
+      <td>-</td>
+      <td>Integer/Real</td>
+    </tr>
+    <tr>
+      <td>Modulus</td>
+      <td>%</td>
+      <td>10</td>
+      <td>Binary</td>
+      <td>Remainder of an integer division</td>
+      <td>-</td>
+      <td>-</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Exponentiation</td>
+      <td>**</td>
+      <td>11</td>
+      <td>Binary</td>
+      <td>-</td>
+      <td>a to the power of b (if at least one is a real)</td>
+      <td>-</td>
+      <td>Real</td>
+    </tr>
+    <tr>
+      <td>Logical NOT</td>
+      <td>!</td>
+      <td>12</td>
+      <td>Unary</td>
+      <td>(a == 0) ? 1 : 0</td>
+      <td>-</td>
+      <td>-</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>Logarithmation</td>
+      <td>~</td>
+      <td>12</td>
+      <td>Unary</td>
+      <td>-</td>
+      <td>log base 2 of a</td>
+      <td>-</td>
+      <td>Real</td>
+    </tr>
+  </tbody>
+</table>
+
+Parentheses can be used to clearly indicate the order in which operations should precede past others
+defined by the language's precedence table.
+
+For expressions that are meant to represent boolean values, integers by default represent them the
+best and all logical operators evaluate to integer types, however, reals and strings can represent
+them too. For reals, 0.0 is false and everything else is true, and for strings, an empty string ""
+is false and anything else is true.
+
+## 4.2 Control Flow
+
+## 4.3 Miscellaneous Keywords
+
+exit, global
