@@ -301,6 +301,135 @@ is false and anything else is true.
 
 ## 4.2 Control Flow
 
+The language offers the abstraction of control flow by providing the two basic necessary keywords 
+for conditional and iterative logic, inspired by the control flow statements available in UML.
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "opt" keyword
+</p>
+
+<CodeBlockLTS>
+```
+    opt [expression]
+      ...
+```
+</CodeBlockLTS>
+
+LiteScript's version of the "if" statement. Just like in assembly, if the expression evaluates
+to true the program enters the next indented scope, which ends until we return to a prior scope;
+otherwise skip all the statements of the indented scope until reaching the next statement within
+the same scope.
+
+The opt keyword is the main method for writing conditional statements, with no abstractions
+for else-if, else and switch statements, we consider that this is enough and all that is ever going
+to be needed.
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "loop" keyword
+</p>
+
+<CodeBlockLTS>
+```
+    loop [expression]
+      ...
+```
+</CodeBlockLTS>
+
+LiteScript's version of the "while" statement. If the expression evaluates to true, then run just
+like an opt statement, execute the code in the following indented scopes, however when the scope
+ends, return to the loop statement to reevaluate the expression and see what it now evaluates. If
+it evaluates, skip the following indented scopes just like the opt statements.
+
+The loop keyword is therefore the sole method for writing iterative statements, only abstracting 
+the jump to label behavior from assembly, with no abstractions for other loops like "for" and
+foreach loops.
+
+Thus, with these control flow keywords, we guarantee that LiteScript can simulate a Turing machine,
+therefore proving the language's turing completeness, meaning that the language can perform any
+theoretical mathematical computation.
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "conditional" keyword (deprecated)
+</p>
+
+<CodeBlockLTS>
+```
+    conditional [expression]
+      ...
+```
+</CodeBlockLTS>
+
+This used to be the only keyword for conditional statements up until LiteScript 0.8.2, where it
+was replaced by the opt keyword because it was to verbose and tedious to write continuously. It
+is still supported for backwards compatibility, but its use is discouraged.
+
 ## 4.3 Miscellaneous Keywords
 
-exit, global
+There are still a couple of keywords missing that provide extra behavior to the language, most
+notably global variables which is what mainly transforms LiteScript from being a functional 
+programming language to a procedural one.
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "global" keyword
+</p>
+
+<CodeBlockLTS>
+```
+    global [variable]
+```
+</CodeBlockLTS>
+
+Since the global scope in LiteScript doesn't exist, we need a way to create variables/symbols that
+are accessible throughout the entire runtime. So the language offers a keyword that creates a global
+reference during runtime like Python, but unlike Python this is the only exclusive way to do this.
+
+All it does is bind a symbol/name of a variable of any type, including primitive and containers, (that 
+has to be declared later) to a global reference that can be referenced anytime after its creation by any 
+scope. All following modifications to a global variable will have their changes visible globally **at a per
+line granularity**, so after the statement has finished executing. These global variables are also shared 
+between threads, which is the only method of inter-thread communication that is natively supported.
+
+It is important to then declare the variable with a value after declaring the global reference, as
+its value is completely undefined at initialization and cannot be used.
+
+<CodeBlockLTS>
+```
+    global x
+    x = 0
+    y = 1 + x ✅
+```
+</CodeBlockLTS>
+
+<CodeBlockLTS>
+```
+    global x
+    y = 1 + x ❌
+```
+</CodeBlockLTS>
+
+The global keyword can also be used for making local variables global during runtime, in this case
+the value will be correctly initialized with the current value it is holding.
+
+<CodeBlockLTS>
+```
+    x = 3
+    global x
+```
+</CodeBlockLTS>
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "exit" keyword
+</p>
+
+<CodeBlockLTS>
+```
+    exit [integer]
+```
+</CodeBlockLTS>
+
+LiteScript provides a built-in keyword for exiting the program, with an optional integer parameter 
+that specifies the exit code. If the parameter is not provided, then the program exits with a 
+default code of 0.
+
+When calling exit, all imported modules running and their implicit data structures and objects are 
+automatically cleaned up during exiting, so there is no need for manual cleanup.
