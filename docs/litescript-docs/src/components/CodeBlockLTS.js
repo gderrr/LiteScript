@@ -77,7 +77,8 @@ export default function CodeBlockLTS({ children }) {
     });
     return result;
   };
-  const code = flattenChildren(children).trim();
+  const precode = flattenChildren(children);
+  const code = precode.replace(/\n[ \t]*$/, '');
 
   return (
     <Highlight

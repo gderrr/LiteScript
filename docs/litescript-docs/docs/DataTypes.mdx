@@ -93,3 +93,291 @@ LiteScript **doesn't natively support a primitive character data type**, so sing
 with strings.
 
 ## 3.2 Containers
+
+Containers are the only supported data structure in LiteScript, and they are implemented as dictionaries
+that hold ordered key-value pairs, meaning that every regular modification and access is performed in **logaritmic**
+time complexity.
+
+A key can be any of the three primitive data types mentioned previously and they can all work in unison,
+meaning that in a same container we can have keys that are of a different data type, the order of which
+is as follows: first **integers**, second **reals** and lastly **strings**.
+
+A value can be any of the three primitive data types mentioned previously **in addition to containers**, 
+therefore allowing containers to be nested inside others as long as their key is of a primitive data
+type.
+
+To declare an empty container, just simply declare it with a name using the "container" keyword.
+
+<CodeBlockLTS>
+container [name]
+</CodeBlockLTS>
+
+Containers also hold a number of unique member operations that can be invoked, with their particular
+LiteScript syntax, with these we can simulate any data structure that we could ever need: stacks, queues,
+dictionaries, heaps, lists... (with the performance drawback).
+
+### 3.2.1 Container operations
+
+**NOTES:** 
+- **All these operations are case-sensitive, fixed-form and are atomic at the instruction level, meaning that 
+they occupy an entire line.**
+- Containers can also be used as variables.
+- The following operations: top, end, psh, pop, deq, num are done in near constant time.
+- The following operations: igtk, igtv are done in near linear time.
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "get" operation
+</p>
+
+<CodeBlockLTS>
+```
+    [container] get [key] -> [variable]
+```
+</CodeBlockLTS>
+
+Given a specific key, gets the value which that key holds and stores it in the specified variable.
+Since container accesses are atomic at the instruction/line granularity, it means that we **cannot
+directly reference container values in expressions**, they have to be gathered separately, adhering
+to the philosophy of memory accesses in assembly.
+
+Only variables can be used to retrieve values, expressions are not to be used; however you can use
+expressions to evaluate keys, as long as it is compacted.
+
+<CodeBlockLTS>
+```
+    c get 0 -> x ✅
+    c get i+1 -> x ✅
+    c get i + 1 -> x ❌
+    c get i+1 -> x+1 ❌
+```
+</CodeBlockLTS>
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "put" operation
+</p>
+
+<CodeBlockLTS>
+```
+    [container] put [key] <- [expression]
+```
+</CodeBlockLTS>
+
+Given a specific key, evaluates the expression and puts the corresponing value in the container at
+the specified key.
+
+You can use expressions to evaluate keys and values, as long as the key expression is compacted.
+
+<CodeBlockLTS>
+```
+    c put 0 <- x ✅
+    c put i+1 <- x-1 ✅
+    c put i+1 <- x - 1 ✅
+    c put i + 1 <- x+1 ❌
+```
+</CodeBlockLTS>
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "del" operation
+</p>
+
+<CodeBlockLTS>
+```
+    [container] del [key]
+```
+</CodeBlockLTS>
+
+Given a specific key, erases the entry (its key-value pair) associated to that key.
+
+You can use expressions to evaluate keys, compactness is not mandatory.
+
+<CodeBlockLTS>
+```
+    c del 0 ✅
+    c del i+1 ✅
+    c del i + 1 ✅
+```
+</CodeBlockLTS>
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "top" operation
+</p>
+
+<CodeBlockLTS>
+```
+    [container] top -> [variable]
+```
+</CodeBlockLTS>
+
+Gets the first ordered value of the container and stores it in the specified variable.
+
+Must specify a variable to retrieve the value, expressions cannot be used.
+
+<CodeBlockLTS>
+```
+    c top -> x ✅
+    c top -> x+1 ❌
+    c top -> 0 ❌
+```
+</CodeBlockLTS>
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "end" operation
+</p>
+
+<CodeBlockLTS>
+```
+    [container] end -> [variable]
+```
+</CodeBlockLTS>
+
+Gets the last ordered value of the container and stores it in the specified variable.
+
+Must specify a variable to retrieve the value, expressions cannot be used.
+
+<CodeBlockLTS>
+```
+    c end -> x ✅
+    c end -> x+1 ❌
+    c end -> 0 ❌
+```
+</CodeBlockLTS>
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "psh" (push) operation
+</p>
+
+<CodeBlockLTS>
+```
+    [container] psh <- [expression]
+```
+</CodeBlockLTS>
+
+Evaluates the expression and pushes the value at the new last **numbered** key position, for this
+to work the container must **only hold integer keys**.
+
+<CodeBlockLTS>
+```
+    container c
+    c psh <- x ✅
+    
+    c put 3 <- x+2
+    c psh <- "hey" ✅
+
+    c put "text" <- x
+    c psh <- 0 ❌
+```
+</CodeBlockLTS>
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "pop" operation
+</p>
+
+<CodeBlockLTS>
+```
+    [container] pop
+```
+</CodeBlockLTS>
+
+Simply erases the last ordered key-value pair on the container. The container can hold any type
+of keys for this to work. It triggers an exception if empty.
+
+<CodeBlockLTS>
+```
+    c pop
+```
+</CodeBlockLTS>
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "deq" (dequeue) operation
+</p>
+
+<CodeBlockLTS>
+```
+    [container] deq
+```
+</CodeBlockLTS>
+
+Simply erases the first ordered key-value pair on the container. The container can hold any type
+of keys for this to work. It triggers an exception if empty.
+
+<CodeBlockLTS>
+```
+    c deq
+```
+</CodeBlockLTS>
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "num" operation
+</p>
+
+<CodeBlockLTS>
+```
+    [container] num -> [variable]
+```
+</CodeBlockLTS>
+
+Returns the number of key-value pairs stored in the container and stores that value into the specified
+variable.
+
+Must specify a variable to retrieve the value, expressions cannot be used.
+
+<CodeBlockLTS>
+```
+    c num -> x ✅
+    c num -> x+1 ❌
+```
+</CodeBlockLTS>
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "igtk" (indexed get key) operation
+</p>
+
+<CodeBlockLTS>
+```
+    [container] igtk [expression] -> [variable]
+```
+</CodeBlockLTS>
+
+Evaluates the expression and given the resulting value as an index, retrieves the key at that position
+and stores it in the specified variable. Its use case is to retrieve keys by index in containers that don't have
+integer valued keys.
+
+Must specify a variable to retrieve the key, expressions cannot be used. The expression that evaluates
+the index must evaluate to an integer and be in compacted form.
+
+<CodeBlockLTS>
+```
+    c igtk 0 -> x ✅
+    c igtk 2+1 -> x ✅
+    c igtk 2 + 1 -> x ❌
+    c igtk 0 -> x+1 ❌
+    c igtk 0.1 -> x ❌
+```
+</CodeBlockLTS>
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "igtv" (indexed get value) operation
+</p>
+
+<CodeBlockLTS>
+```
+    [container] igtv [expression] -> [variable]
+```
+</CodeBlockLTS>
+
+Evaluates the expression and given the resulting value as an index, retrieves the value at that position
+and stores it in the specified variable. Its use case is to retrieve values by index in containers that don't have
+integer valued keys.
+
+Must specify a variable to retrieve the value, expressions cannot be used. The expression that evaluates
+the index must evaluate to an integer and be in compacted form.
+
+<CodeBlockLTS>
+```
+    c igtv 0 -> x ✅
+    c igtv 2+1 -> x ✅
+    c igtv 2 + 1 -> x ❌
+    c igtv 0 -> x+1 ❌
+    c igtv 0.1 -> x ❌
+```
+</CodeBlockLTS>

@@ -5,7 +5,9 @@ start
 	c put "hello" <- 0.67
 	c put "nah" <- 420
 	c put "lmfao" <- "nice"
-	n = 3
+	c put 3 <- "lol"
+	c put 1.2 <- "x"
+	n = 4
 	i = 0
 	loop i < n
 		key = 0
