@@ -5,6 +5,151 @@ import CodeBlockLTS from '@site/src/components/CodeBlockLTS';
 
 # 6. Modules
 
+Modules are the lifeblood of the language, that provide the core functionalities that actually
+make the language useful. They expose a wrapper of custom function calls directly embedded to
+the interpreter that can be called from any point of the program, with some special propierties
+unique to those types of function calls.
+
+That way, we wrapper a bunch of libraries with different useful functionalities around a turing
+complete procedural dynamic scripting language, thus being the very essence of LiteScript.
+
+### 6.0.1 Module Functions
+
+Module functions are the public interface of the callable functionalities of each module, they
+can either manipulate variables that you provide, or change the internal state of the module.
+
+They are invoked just like regular user functions, except that they end with a semicolon (';')
+to signal that it is a module function call and it cannot used as an expression in an assigner
+statement, therefore they are **strictly considered procedures and never return anything**.
+
+<CodeBlockLTS>
+```
+    [module function]; ... ✅
+    [variable] [assigner] [module function]; ... ❌
+```
+</CodeBlockLTS>
+
+Module functions have a predefined fixed behavior and are directly embedded in the interpreter's
+source code, so they always expect a certain amount of arguments of a certain type so they cannot
+be of any type, unlike user functions (providing a wrong type as a argument will result in a type
+mismatch error).
+
+Since these functions never return anything, **All parameters are passed by reference** meaning that
+if we pass variables they are mutable and can be altered after calling the module function. Don't worry
+as in each module function description it specifies when variables are modified and when they are not.
+
+Unlike, user functions, module functions are **higher order functions**, meaning that apart from accepting
+primitive data types and containers, they also accept functions as parameters (note though that it is always
+the last parameter of the module function and all parameters after the call are parameters associated to the
+passed function).
+
+<CodeBlockLTS>
+```
+func
+    ...
+start
+    ...
+    x = 3.14
+    [module function]; x 3 "Hello there" func: a b
+    The value of x may be altered, but the values of a and b not.
+```
+</CodeBlockLTS>
+
+### 6.0.2 Notation
+
+In this subsection, we want to make clear the notation used to describe the modules in the
+following sections, since many modules carry an internal state that is mutable throughout the
+program and some topics need to be addressed, such as when functionalities are thread local, which
+types of arguments are expected and when arguments can be expressions.
+
+<p style={{ fontSize: "1.5rem" }}>
+Module notation:
+</p>
+
+**Import statement:**
+<CodeBlockLTS>import MODULE</CodeBlockLTS>
+
+Its import statement to activate/import the module, so that its module function are available for
+use, with the module NAME required to be put.
+
+**Internal state attributes:**
+<div id="mod">
+**Map(String, Object) Name**
+- **Thread local:** Yes/No
+- **Cardinality:** NUMBER
+</div>
+
+For each internal data structure that it may have, information about its type, its name, if it is
+thread local and the number of elements that it can have if it is a data structure, ergo its
+cardinality, where:
+- TYPE: Some simplifications may be made, but what is important is to show what it conceptually represents.
+    - Integer: May also represent a boolean value.
+    - Real
+    - String
+    - Tuple(TYPE, TYPE, ..., TYPE)
+    - Array(TYPE)
+    - Map(TYPE, TYPE): Equivalent to a key-value pair dictionary.
+    - CUSTOM: Check the source code for more information, may be either domain-specific custom types
+    or C++ standard library types.
+- NAME: The name of the attribute.
+- NUMBER: Number of the cardinality of the attribute, following the [UML multiplity notation](https://www.omg.org/spec/UML/2.5.1/PDF).
+
+If an attribute is not thread local that means that any modification, **including insertion and deletion** of certain entries
+in a data structure, is prone to race conditions and therefore mutual exclusion must be guaranteed between modifications.
+
+<p style={{ fontSize: "1.5rem" }}>
+Module function notation:
+</p>
+
+**Function call:**
+<CodeBlockLTS>
+```
+    NAME; TYPE1 ... TYPEn
+```
+</CodeBlockLTS>
+
+Describes how a certain module function has to be called an its types, where:
+- NAME: Name of the module function.
+- TYPE: Multiple compatible types are separated by '/'.
+    - Integer
+    - Real
+    - String
+    - Container
+    - Function (invoked with ':', any arguments passed after the function call will be part of
+    the function that is being passed as an argument).
+
+There are special symbols with meanings, if a type is between:
+- []: It is mandatory.
+- (): It is optional.
+
+More special symbols:
+- *: The argument is a mutable reference therefore a variable is to be provided and an expression cannot be used.
+- /: If used when listing arguments, then the arguments on the right are an additional optional extension of arguments.
+- ...: Variadic number of arguments, any number accepted.
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** DESCRIPTION
+- **2nd argument:** DESCRIPTION
+- ...
+</div>
+
+More information about the arguments, with a brief DESCRIPTION.
+
+**Modifies:**
+<div id="mod">
+- STATEATTRIBUTE1
+- STATEATTRIBUTE2
+- ...
+</div>
+
+Lists the names of the internal state attribute that will be modified.
+
+**Description:**
+DESCRIPTION
+
+A description that explains in more detail what the module function call does.
+
 ## 6.1 IO Module
 
 ## 6.2 ASCII Module
