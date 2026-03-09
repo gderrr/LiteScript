@@ -4,3 +4,197 @@ sidebar_position: 6
 import CodeBlockLTS from '@site/src/components/CodeBlockLTS';
 
 # 5. Functions
+
+Like any procedural language, we need a way to create blocks of reusable code that can be called
+at any point in our program, to handle a certain repeatable task. LiteScript abstracts the
+assembly functions to how it is done in most scripting languages but also keeps some characteristics
+of assembly for its functions.
+
+To start, in LiteScript there are two types of functions: module functions (explained in detail in
+section 6) and user functions, those that the programmer can define and call from any point in the
+program.
+
+## 5.1 Definition and Calling
+
+Like mentioned previously, lines with no starting tabs are reserved exclusively for dependency keywords
+and user functions (including start, remember that apart from being the main point of entry, it is
+also a user function). So to define a function, just simply type a name at lines with no starting tab and
+define the function body by indenting the next scope, the function ends when it finds another line at
+indentation level 0 (either end of file, or another function).
+
+<CodeBlockLTS>
+```
+...
+[function]
+    ...
+    End of function here
+start
+    ...
+```
+</CodeBlockLTS>
+
+The order of the functions does not matter, so a function does not strictly need to be declared 
+above where it will be called.
+
+Now, to call functions anywhere in the code, just simply type the name of the function and end
+it with a colon (':') to tell the interpreter that you are invoking a function call. Function calls
+can be done on an entire line (in which case the returned value will be ignored) or with an assigner
+preceding it, everything past the function call will be considered parameters where each parameter
+is seperated by spaces.
+
+<CodeBlockLTS>
+```
+    [function]: ...
+    [variable] [assigner] [function]: ...
+```
+</CodeBlockLTS>
+
+<CodeBlockLTS>
+```
+    func: ...
+    x = func: ...
+```
+</CodeBlockLTS>
+
+It is important to know the the colons are only for indicating a **function call**, function declarations
+at the top (function names/labels) **cannot have colons**.
+
+<CodeBlockLTS>
+```
+func ✅
+    ...
+func2: ❌
+    ...
+start
+    func: ... ✅
+    func ... ❌
+```
+</CodeBlockLTS>
+
+You can't define functions past indentation level 0, therefore nested functions/lambdas are not
+supported. If you don't use a colon to invoke a function call, the interpreter will recognize it
+as a variable.
+
+Since "start" is a user function, it can also be invoked. Also functions can be call themselves to
+allow recursion, just be aware of the overhead of creating a new function content in the interpreter
+call stack.
+
+<CodeBlockLTS>
+```
+func
+    start: ...
+    func: ...
+```
+</CodeBlockLTS>
+
+## 5.2 Parameters
+
+Now for LiteScript's unique take on parameter handling in functions. You can see that in function
+defintions, we only define the name/label and the body in the next scope, but where are the
+parameters?
+
+Here's is the catch: **The parameters in the callee function are unknown during invocation.** In
+other words, each function accepts any number of parameters, just how it is done in assembly.
+The caller can pass any number of parameters and **they can be different in each function call**.
+
+<CodeBlockLTS>
+```
+    func: arg1 ... argi ✅
+    func: arg1 ... argi argi+1 ... argj ✅
+```
+</CodeBlockLTS>
+
+Therefore, LiteScript functions are **variadic in number of arguments by default.** Like mentioned
+earlier, each parameter passed in a function call is separated by spaces, so we can pass as parameters
+expressions of any primitive data type and containers, as long as they are compacted; in the case of strings, they don't have to be compacted as the quotes already delimit the string,
+however parentheses don't delimitate expressions.
+
+<CodeBlockLTS>
+```
+    func: 1 2 3 4 ✅
+    func: x x+1 "hello there" ✅
+    func: x + 1 ❌
+    func: (x + 1) ❌
+```
+</CodeBlockLTS>
+
+Also the parameter list occupies the entire line, so we can't combine function calls in expressions that
+fit in one line.
+
+<CodeBlockLTS>
+```
+    w = func: x y + func: x z ❌
+```
+</CodeBlockLTS>
+
+User functions are strictly **lower order functions**, so unlike module functions, you can't pass other
+functions as parameters.
+
+<CodeBlockLTS>
+```
+    func1: x func2: y ❌
+```
+</CodeBlockLTS>
+
+For user functions, **all parameters are passed by value**, meaning that all parameters are copied
+to be used by the function, and are **immutable** (their value can't change).
+
+When the caller invokes a function call with a list of parameters/arguments, in the callee, the
+function by default recieves implicit variables with a name starting with "arg" and ending in the
+number of that argument (starting with 0). There is also an implicit variable called "args" that 
+hold the number of arguments provided by the caller. Here's an example to illustrate it clearly:
+
+<CodeBlockLTS>
+```
+func:
+    a = arg0 (arg0 Holds 7.2)
+    b = arg1 (arg1 Holds 2)
+    c = arg2 (arg2 Holds "Hi bro")
+    n = args (arg3 Holds 3)
+    ...
+
+start
+    x = 7.2
+    func: x 1+1 "Hi bro"
+    ...
+```
+</CodeBlockLTS>
+
+In the case of the start function, when executed for the first time, it recieves as parameters/arguments 
+the strings passed in the command where the interpreter running the LiteScript file was called.
+
+```
+lite program.lts butter
+```
+
+<CodeBlockLTS>
+```
+start
+    a = args (args holds 1)
+    b = arg0 (arg0 holds "butter")
+```
+</CodeBlockLTS>
+
+## 5.3 Function Returning
+
+By default, LiteScript permits any output/return type, since it is dynamically typed.
+
+If the program reaches an end of function, then it automatically returns to the point where it
+was called.
+
+When it's time to signal to return to the point where the corresponding function call was made, 
+we provide the following keyword that every prodecural programming language has:
+
+<p style={{ fontSize: "1.5rem" }}>
+- The "return" keyword
+</p>
+
+<CodeBlockLTS>
+```
+    return [expression]
+```
+</CodeBlockLTS>
+
+Returns to the point where the caller invoked the function call and executes the next statement.
+Accepts an expression of any type as the return value, optionally provided if the function is
+supposed to be a procedure with its return value ignored.

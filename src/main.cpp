@@ -532,9 +532,11 @@ any interpret (int startLine, const vector<any>& args) {
 
         // RETURN
         else if (instruction[0] == "return") {
-            any ret;
-            if (!existsVariable(variables, instruction[1])) ret = evaluate(variables, instruction[1]);
-            else ret = variables.at(instruction[1]);
+            any ret = any{};
+            if (instruction.size() != 1) {
+                if (!existsVariable(variables, instruction[1])) ret = evaluate(variables, instruction[1]);
+                else ret = variables.at(instruction[1]);
+            }
             return ret;
         }
 
