@@ -77,6 +77,7 @@ use, with the module NAME required to be put.
 **Map(String, Object) Name**
 - **Thread local:** Yes/No
 - **Cardinality:** NUMBER
+- **Initialized: Yes/No**
 </div>
 
 For each internal data structure that it may have, information about its type, its name, if it is
@@ -96,6 +97,11 @@ cardinality, where:
 
 If an attribute is not thread local that means that any modification, **including insertion and deletion** of certain entries
 in a data structure, is prone to race conditions and therefore mutual exclusion must be guaranteed between modifications.
+
+**Description:**
+DESCRIPTION
+
+A description that explains in more detail what the module's purpose is.
 
 <p style={{ fontSize: "1.5rem" }}>
 Module function notation:
