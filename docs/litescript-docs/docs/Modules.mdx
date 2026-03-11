@@ -122,13 +122,13 @@ Module function notation:
 Describes how a certain module function has to be called an its types, where:
 - NAME: Name of the module function.
 - TYPE: Multiple compatible types are separated by '/'.
-    - Integer
-    - Real
-    - String
-    - Numeric: integer or real.
-    - Primitive: integer, real or string.
-    - Container
-    - Function (invoked with ':', any arguments passed after the function call will be part of
+    - integer
+    - real
+    - string
+    - numeric: integer or real.
+    - primitive: integer, real or string.
+    - container
+    - function (invoked with ':', any arguments passed after the function call will be part of
     the function that is being passed as an argument).
 
 There are special symbols with meanings, if a type is between:
@@ -555,6 +555,33 @@ Casts the string into a real type. Also works with infinite and NaN values.
 Casts a numeric value into a string.
 
 ## 6.3 Thread Module
+
+**Import statement:**
+<CodeBlockLTS>import thread</CodeBlockLTS>
+
+**Internal state attributes:**
+<div id="mod">
+**std::atomic(Integer) activeThreads**
+- **Thread local:** No
+- **Cardinality:** 1
+- **Initialized: No**
+</div>
+<div id="mod">
+**Array(std::mutex) implicitMutexes**
+- **Thread local:** No
+- **Cardinality:** 0..128
+- **Initialized: No**
+</div>
+<div id="mod">
+**Integer currentThreadIndex**
+- **Thread local:** Yes
+- **Cardinality:** 1
+- **Initialized: Yes**
+</div>
+
+**Description:**
+Allows execution of concurrent and parallel code with a fork-join thread model or with asynchronous
+threads, with up to 128 implicit mutex objects for mutual exclusion.
 
 ## 6.4 Math Module
 
