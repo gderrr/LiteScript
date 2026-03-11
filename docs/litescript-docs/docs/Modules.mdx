@@ -38,6 +38,9 @@ Since these functions never return anything, **All parameters are passed by refe
 if we pass variables they are mutable and can be altered after calling the module function. Don't worry
 as in each module function description it specifies when variables are modified and when they are not.
 
+However, **arguments passed in a module function cannot dynamically change types**, so only the expected
+types can be provided.
+
 Unlike, user functions, module functions are **higher order functions**, meaning that apart from accepting
 primitive data types and containers, they also accept functions as parameters (note though that it is always
 the last parameter of the module function and all parameters after the call are parameters associated to the
@@ -120,6 +123,8 @@ Describes how a certain module function has to be called an its types, where:
     - Integer
     - Real
     - String
+    - Numeric: Integer or Real.
+    - Primitive: Integer, real or string.
     - Container
     - Function (invoked with ':', any arguments passed after the function call will be part of
     the function that is being passed as an argument).
@@ -156,7 +161,68 @@ DESCRIPTION
 
 A description that explains in more detail what the module function call does.
 
+**Examples:**
+...
+
+Optional examples can be provided to more clearly illustrate concepts, with a possible additional description.
+
 ## 6.1 IO Module
+
+**Import statement:**
+<CodeBlockLTS>import io</CodeBlockLTS>
+
+**Internal state attributes:**
+<div id="mod">
+**None.**
+</div>
+
+**Description:**
+Provides functions to recieve user input and output values.
+
+### display;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    display; (primitive) ...
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **Any argument:** Expression of primitive type to be displayed. 
+</div>
+
+**Modifies:**
+<div id="mod">
+**Nothing.**
+</div>
+
+**Description:**
+Writes values to the standard output file descriptor.
+
+### input;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    input; (primitive)* ...
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **Any argument:** Variable of primitive type to have its value inputted. 
+</div>
+
+**Modifies:**
+<div id="mod">
+**Nothing.**
+</div>
+
+**Description:**
+For each variable provided, expects an input from the standard input file descriptor and assigns
+that value to that variable.
 
 ## 6.2 ASCII Module
 

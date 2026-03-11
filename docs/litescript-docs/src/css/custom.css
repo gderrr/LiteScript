@@ -71,3 +71,11 @@ code, pre {
   border-radius: 20px;
   padding: 20px;
 }
+
+#mod p {
+  margin: 0;
+}
+
+#mod ul {
+  margin: 0;
+}
