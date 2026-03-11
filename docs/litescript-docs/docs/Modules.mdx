@@ -10,7 +10,7 @@ make the language useful. They expose a wrapper of custom function calls directl
 the interpreter that can be called from any point of the program, with some special propierties
 unique to those types of function calls.
 
-That way, we wrapper a bunch of libraries with different useful functionalities around a turing
+That way, we wrap a bunch of libraries with different useful functionalities around a simple turing
 complete procedural dynamic scripting language, thus being the very essence of LiteScript.
 
 ### 6.0.1 Module Functions
@@ -96,10 +96,12 @@ cardinality, where:
     - CUSTOM: Check the source code for more information, may be either domain-specific custom types
     or C++ standard library types.
 - NAME: The name of the attribute.
-- NUMBER: Number of the cardinality of the attribute, following the [UML multiplity notation](https://www.omg.org/spec/UML/2.5.1/PDF).
+- NUMBER: Number of the cardinality of the attribute, following the [UML multiplicity notation](https://www.omg.org/spec/UML/2.5.1/PDF).
 
 If an attribute is not thread local that means that any modification, **including insertion and deletion** of certain entries
 in a data structure, is prone to race conditions and therefore mutual exclusion must be guaranteed between modifications.
+
+Will not be present if there are no attributes.
 
 **Description:**
 DESCRIPTION
@@ -123,8 +125,8 @@ Describes how a certain module function has to be called an its types, where:
     - Integer
     - Real
     - String
-    - Numeric: Integer or Real.
-    - Primitive: Integer, real or string.
+    - Numeric: integer or real.
+    - Primitive: integer, real or string.
     - Container
     - Function (invoked with ':', any arguments passed after the function call will be part of
     the function that is being passed as an argument).
@@ -156,6 +158,8 @@ More information about the arguments, with a brief DESCRIPTION.
 
 Lists the names of the internal state attribute that will be modified.
 
+Will not be present if there are no modifications.
+
 **Description:**
 DESCRIPTION
 
@@ -171,11 +175,6 @@ Optional examples can be provided to more clearly illustrate concepts, with a po
 **Import statement:**
 <CodeBlockLTS>import io</CodeBlockLTS>
 
-**Internal state attributes:**
-<div id="mod">
-**None.**
-</div>
-
 **Description:**
 Provides functions to recieve user input and output values.
 
@@ -190,16 +189,12 @@ Provides functions to recieve user input and output values.
 
 **Arguments:**
 <div id="mod">
-- **Any argument:** Expression of primitive type to be displayed. 
-</div>
-
-**Modifies:**
-<div id="mod">
-**Nothing.**
+- **Any argument:** Primitive expression. 
 </div>
 
 **Description:**
-Writes values to the standard output file descriptor.
+Writes values to the standard output file descriptor, to the terminal in the running directory
+by default.
 
 ### input;
 
@@ -212,19 +207,352 @@ Writes values to the standard output file descriptor.
 
 **Arguments:**
 <div id="mod">
-- **Any argument:** Variable of primitive type to have its value inputted. 
-</div>
-
-**Modifies:**
-<div id="mod">
-**Nothing.**
+- **Any argument:** Variable to be overwritten. 
 </div>
 
 **Description:**
-For each variable provided, expects an input from the standard input file descriptor and assigns
-that value to that variable.
+For each variable of a primitive type provided, expects an input from the standard input file descriptor and assigns
+that value to that variable, from the terminal in the running directory by default.
 
 ## 6.2 ASCII Module
+
+**Import statement:**
+<CodeBlockLTS>import ascii</CodeBlockLTS>
+
+**Description:**
+Provides functions for string utilities and string casts.
+
+### len;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    len; [string] [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String expression.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the number of characters in the provided string.
+
+### substr;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    substr; [string] [integer] [integer] [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String expression.
+- **2nd argument:** Starting string index.
+- **3nd argument:** Ending string index.
+- **4th argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Given a closed interval of two indexes (starting at 0), return the substring of characters
+of that specified range.
+
+### contains;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    contains; [string] [string] [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String expression.
+- **2nd argument:** Substring expression.
+- **3nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns a boolean value that indicates if the string contains the given substring.
+
+### starts_with;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    starts_with; [string] [string] [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String expression.
+- **2nd argument:** Substring expression.
+- **3nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns a boolean value that indicates if the string starts with the given substring.
+
+### ends_with;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    ends_with; [string] [string] [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String expression.
+- **2nd argument:** Substring expression.
+- **3nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns a boolean value that indicates if the string ends with the given substring.
+
+### to_upper;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    to_upper; [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Variable to be overwritten.
+</div>
+
+**Description:**
+All lowercase ASCII characters will be turned to their uppercase versions.
+
+### to_lower;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    to_lower; [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Variable to be overwritten.
+</div>
+
+**Description:**
+All uppercase ASCII characters will be turned to their lowercase versions.
+
+### trim;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    trim; [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Variable to be overwritten.
+</div>
+
+**Description:**
+Erases all space characters (' ', '\t', '\n', '\r') preceeding the first proper character and
+following the last proper character.
+
+### trim_left;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    trim_left; [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Variable to be overwritten.
+</div>
+
+**Description:**
+Erases all space characters (' ', '\t', '\n', '\r') preceeding the first proper character.
+
+### trim_right;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    trim_right; [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Variable to be overwritten.
+</div>
+
+**Description:**
+Erases all space characters (' ', '\t', '\n', '\r') following the last proper character.
+
+### cut;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    cut; [integer] [integer] [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Starting string index.
+- **2nd argument:** Ending string index.
+- **3rd argument:** Variable to be overwritten.
+</div>
+
+**Description:**
+Erases all characters given a closed interval of two indexes (starting 
+at 0).
+
+### paste;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    paste; [string] [integer] [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Substring expression.
+- **2nd argument:** String index.
+- **3rd argument:** Variable to be overwritten.
+</div>
+
+**Description:**
+Inserts a substring into the string at a specific index, all the old characters past the index get 
+moved in the following positions after the inserted substring.
+
+### replace;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    replace; [string] [string] [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Old substring expression.
+- **2nd argument:** New substring expression.
+- **3rd argument:** Variable to be overwritten.
+</div>
+
+**Description:**
+Given a string, replaces all ocurrences of a specified old substring with the new substring.
+
+### reverse;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    reverse; [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Variable to be overwritten.
+</div>
+
+**Description:**
+Reverses the order of all the characters in a string.
+
+### split;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    split; [string] [container]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String expression.
+- **2nd argument:** Container to be overwritten.
+</div>
+
+**Description:**
+Splits a given string into different strings by space characters (' ', '\t', '\n', '\r')
+and puts them all in the container. Each splitted string will have its own entry in the container with
+an integer key (starting at 0).
+
+### to_integer;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    to_integer; [string] [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String expression.
+- **2nd argument:** Variable to be overwritten.
+</div>
+
+**Description:**
+Casts the string into an integer type. Only compatible with base 10 integers.
+
+### to_real;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    to_real; [string] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String expression.
+- **2nd argument:** Variable to be overwritten.
+</div>
+
+**Description:**
+Casts the string into a real type. Also works with infinite and NaN values.
+
+### to_string;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    to_string; [numeric] [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression.
+- **2nd argument:** Variable to be overwritten.
+</div>
+
+**Description:**
+Casts a numeric value into a string.
 
 ## 6.3 Thread Module
 
