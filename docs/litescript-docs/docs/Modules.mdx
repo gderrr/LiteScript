@@ -77,10 +77,9 @@ use, with the module NAME required to be put.
 
 **Internal state attributes:**
 <div id="mod">
-**Map(String, Object) Name**
+**TYPE NAME**
 - **Thread local:** Yes/No
 - **Cardinality:** NUMBER
-- **Initialized: Yes/No**
 </div>
 
 For each internal data structure that it may have, information about its type, its name, if it is
@@ -564,24 +563,189 @@ Casts a numeric value into a string.
 **std::atomic(Integer) activeThreads**
 - **Thread local:** No
 - **Cardinality:** 1
-- **Initialized: No**
 </div>
 <div id="mod">
 **Array(std::mutex) implicitMutexes**
 - **Thread local:** No
 - **Cardinality:** 0..128
-- **Initialized: No**
 </div>
 <div id="mod">
 **Integer currentThreadIndex**
 - **Thread local:** Yes
 - **Cardinality:** 1
-- **Initialized: Yes**
 </div>
 
 **Description:**
 Allows execution of concurrent and parallel code with a fork-join thread model or with asynchronous
-threads, with up to 128 implicit mutex objects for mutual exclusion.
+threads, with up to 128 implicit mutex objects available for mutual exclusion.
+
+### parallel;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    parallel; [integer] [function] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Integer expression indicating how many threads the master thread creates.
+- **2nd argument:** Worker function that the threads will execute, with providable parameters.
+</div>
+
+**Modifies:**
+<div id="mod">
+- activeThreads: Set to the number of threads indicated by the expression.
+- currentThreadIndex: Each worker thread will have a unique identifier.
+</div>
+
+**Description:**
+Executes a function with a provided number of worker threads, forking each thread which all will
+execute the function in parallel and then all be joined after the worker function has been executed.
+All worker threads are guaranteed to after this statement. Note that the number of threads in
+execution is N+1 (being N the number of threads specified in the statement), since the master thread
+will wait for all worker threads to finish. **Nested parallel regions are not supported.**
+
+### thread_id;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    thread_id; [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns a unique integer identifier ranging from 0 to N-1 (being N the total of worker threads),
+for each thread in parallel execution (previous parallel; statement). Returns -1 if there is no
+parallel context. Allows distinction between worker threads for implicit tasks.
+
+### num_threads;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    num_threads; [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the total of worker threads in parallel execution (previous parallel; statement). 
+Returns 0 if there is no parallel context.
+
+### cache_line_bytes;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    cache_line_bytes; [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the number of bytes in a cache line of the current CPU. Returns 64 as a default value if 
+the sysconf call fails. 
+
+### num_cores;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    num_cores; [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the number of cores of the current CPU. Returns 1 as a default value if the sysconf call 
+fails.
+
+### lock_mutex;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    lock_mutex; [integer] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Integer expression indicating a implicitMutexes index. 
+</div>
+
+**Modifies:**
+<div id="mod">
+- implicitMutexes: Thread safe lock of a mutex.
+</div>
+
+**Description:**
+Given a value from 0 to 127, locks one of the 128 implicit mutexes thus entering a region of
+mutual exclusion where only one thread can run. Any thread wanting to lock a locked mutex waits
+until it is unlocked, if multiple are waiting the entry order is arbitrary.
+
+### unlock_mutex;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    unlock_mutex; [integer] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Integer expression indicating a implicitMutexes index.
+</div>
+
+**Modifies:**
+<div id="mod">
+- implicitMutexes: Thread safe unlock of a mutex.
+</div>
+
+**Description:**
+Given a value from 0 to 127, unlocks one of the 128 implicit mutexes thus leaving a region of
+mutual exclusion previously defined by lock_mutex;. Umlocking an unlocked mutex is undefined
+behavior.
+
+### async_thread;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    async_thread; [function] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Worker function to be executed asynchronously, with providable parameters.
+</div>
+
+**Description:**
+Spawns and forks a thread that detaches and executes a worker function asynchronously from the master thread,
+meaning that the master thread does not wait to finish its execution. The asynchronous thread will
+exist throughout the entire main process's lifetime or until it finishes executing the function.
 
 ## 6.4 Math Module
 
