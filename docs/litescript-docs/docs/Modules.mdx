@@ -1453,6 +1453,394 @@ the end of execution.
 
 ## 6.6 Filesystem Module
 
+**Import statement:**
+<CodeBlockLTS>import filesystem</CodeBlockLTS>
+
+**Internal state attributes:**
+<div id="mod">
+**Map(String, std::fstream) fileStreams**
+- **Thread local:** Yes
+- **Cardinality:** \*
+</div>
+
+**Description:**
+Provides many filesystem utilities: file interaction/manipulation, file/directory creation and
+deletion, directory traversal and other miscellaneous functionalities.
+
+### file_open;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    file_open; [string] [string] (string) 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to fileStreams.
+- **2nd argument:** Path to file.
+- **3rd argument:** Read/write permissions following a specific string format. 
+</div>
+
+**Modifies:**
+<div id="mod">
+- fileStreams: Creates a new entry with an open file stream.
+</div>
+
+**Description:**
+Creates a new file stream opening a file given a specific path (creates it if it doesn't exist),
+which can later be referenced with the provided identifier. Optional string parameter for indicating
+read/write permissions:
+
+- "r" or "read": Only read permissions.
+- "w" or "write": Only write permissions.
+- "r/w" or "read/write": Both read and write permissions.
+
+If the optional parameter is not provided, then open the file with read/write and truncate all content
+(other modes don't truncate). The read and write file cursors are both always synchronized.
+
+### file_close;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    file_close; [string] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to fileStreams.
+</div>
+
+**Modifies:**
+<div id="mod">
+- fileStreams: Deletes the entry associated to the identifier.
+</div>
+
+**Description:**
+Closes an open file stream. All open file streams are automatically closed at the end of execution.
+
+### file_read;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    file_read; [string] [integer] [string]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to fileStreams.
+- **2nd argument:** Integer expression indicating number of bytes to be read.
+- **3rd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Reads the amount of bytes specified from an open file stream provided by the identifier and
+writes them into the returned string.
+
+### file_readline;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    file_readline; [string] [string]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to fileStreams.
+- **2rd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Reads all the bytes specified from an open file stream provided by the identifier and
+writes them into the returned string until it finds a line break (\n).
+
+### file_readall;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    file_readall; [string] [string]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to fileStreams.
+- **2rd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Reads the entire file content bytes specified from an open file stream provided by the identifier and
+writes them into the returned string.
+
+### file_write;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    file_write; [string] [string] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to fileStreams.
+- **2rd argument:** String expression to be written.
+</div>
+
+**Description:**
+Writes the contents of a string to an open file stream provided by the identifier.
+
+### file_cursor;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    file_cursor; [string] [integer]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to fileStreams.
+- **2rd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the position of the cursor from an open file stream provided by the identifier.
+
+### file_move_cursor;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    file_move_cursor; [string] [integer]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to fileStreams.
+- **2rd argument:** Integer expression indicating number of bytes to move.
+</div>
+
+**Description:**
+Moves the cursor of an open file stream provided by the identifier a specific number of bytes
+relative to its old position. Negative values can be used to move the cursor backwards.
+
+### file_set_cursor;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    file_set_cursor; [string] [integer]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to fileStreams.
+- **2rd argument:** Integer expression indicating the cursor position.
+</div>
+
+**Description:**
+Sets the cursor's position of an open file stream provided by the identifier to an absolute
+position of bytes provided. All negative values map the cursor to the end of the file.
+
+### dir_create;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    dir_create; [string] (string) 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** The new directory name.
+- **2nd argument:** An optional path where the directory will be created.
+</div>
+
+**Description:**
+Creates an empty directory with the provided name, with an optional path indicating where it shall
+be created at (if none is provided then it will be created in the running directory).
+
+### remove;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    remove; [string] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Path to a directory or file.
+</div>
+
+**Description:**
+Removes an element from the filesystem given a specific path. If the element doesn't exist it
+does nothing, if it is just a filename it searches in the running directory, if the element is
+a file then it deletes it, and if the element is a directory, it deletes all its contents
+recursively and then it.
+
+### path_exists;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    path_exists; [string] [integer]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String that represents a filesystem path.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns a boolean value if the indicated path exists or not.
+
+### is_file;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    is_file; [string] [integer]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String that represents a filesystem path.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns a boolean value if the indicated path exists and points to a file or not.
+
+### is_dir;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    is_dir; [string] [integer]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String that represents a filesystem path.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns a boolean value if the indicated path exists and points to a directory or not.
+
+### walk;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    walk; [string] [container]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String that represents a filesystem path.
+- **2nd argument:** Container to be overwritten.
+</div>
+
+**Description:**
+Given a filesystem path, if it is a directory: then it lists all the contents (files and 
+directories) that it contains and puts them all in the container, if the path doesn't exist
+or it is a file, then it returns an empty container. Each listed element will have its own entry 
+in the container with an integer key (starting at 0).
+
+### get_cwd;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    get_cwd; [string]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the absolute filesystem path to the running directory.
+
+### set_cwd;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    set_cwd; [string]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String that represents a filesystem path.
+</div>
+
+**Description:**
+Sets the running directory to the provided filesystem path. If it doesn't exist, or it is
+a file, then it does nothing.
+
+### get_filename;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    get_filename; [string] [string]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String that represents a filesystem path.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the last component of a provided filesystem path. Works with both files and
+directories.
+
+### get_extension;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    get_extension; [string] [string]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String that represents a filesystem path.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the file extension of the last component of a provided filesystem path, with the leading
+dot. If it is a directory, it returns an empty string.
+
 ## 6.7 Network Module
 
 ## 6.8 GUI Module
