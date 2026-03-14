@@ -120,7 +120,7 @@ Module function notation:
 
 Describes how a certain module function has to be called an its types, where:
 - NAME: Name of the module function.
-- TYPE: Multiple compatible types are separated by '/'.
+- TYPE:
     - integer
     - real
     - string
@@ -1092,7 +1092,7 @@ Returns the value of pi used implicitly by the interpreter (rounded to 7 decimal
 
 **Description:**
 Implements wrappers to unix based system calls on the Linux kernel for systems programming; 
-allowing process creation/management, signal sending, low level memory safe heap chunk
+allowing process creation/management, signal sending, low level garbage collected heap chunk
 manipulation for fast contiguous memory, pipe creation with up to 128 implicit pipes, along with
 miscellaneous functionalities.
 
@@ -1246,6 +1246,210 @@ to the CPU scheduler.
 **Description:**
 Returns the current unix epoch time truncated to 32 bits. Optional second variable for returning 
 the upper 32 bits of the current unix epoch time.
+
+### heap_allocate;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    heap_allocate; [string] [integer]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to memoryChunks.
+- **2nd argument:** Integer expression indicating number of bytes.
+</div>
+
+**Modifies:**
+<div id="mod">
+- memoryChunks: Creates a new entry with a pointer to the newly allocated heap chunk.
+</div>
+
+**Description:**
+Creates a new memory chunk on the heap allocating the specified number of bytes, which can be
+later referenced with the provided identifier. If a memory chunk with the same identifier already
+exists, it automatically gets freed and reallocated with a new chunk.
+
+### heap_read;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    heap_read; [string] [integer] [primitive]* / [integer]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to memoryChunks.
+- **2nd argument:** Integer expression indicating offset to base memory chunk pointer.
+- **3rd argument:** Return variable to be overwritten.
+- **4th argument:** Integer expression indicating number of bytes to be read, mandatory when returning strings.
+</div>
+
+**Description:**
+Reads the contents of a memory address in the heap, provided by the base pointer of the memory chunk identifier plus the
+indicated offset, and writes them into the return variable. It reads the raw bytes of whatever is left there
+so it automatically gets casted into the return variable type. If the return variable type is numeric, it reads
+4 bytes and if it is a string then it reads the specified number of bytes. Bounds checking is not taken into account.
+
+### heap_write;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    heap_write; [string] [integer] [primitive]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to memoryChunks.
+- **2nd argument:** Integer expression indicating offset to base memory chunk pointer.
+- **3rd argument:** Primitive expression to be written in the heap.
+</div>
+
+**Description:**
+Writes the contents of an expression in a memory address in the heap, provided by the base pointer of the memory chunk identifier plus the
+indicated offset, and writes them into the return variable. It writes the raw bytes of whatever type is the expression. 
+If the return variable type is numeric, it writes 4 bytes and if it is a string then it writes the string encoding
+(in the case of ASCII strings, the number of characters are the bytes). Bounds checking is not taken into account.
+
+### heap_free;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    heap_free; [string] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to memoryChunks.
+</div>
+
+**Modifies:**
+<div id="mod">
+- memoryChunks: Deletes the entry associated to the identifier.
+</div>
+
+**Description:**
+Frees, at will, an allocated memory chunk, freeing heap memory at runtime that can be reallocated
+later. All allocated memory chunks are also automatically freed at the end of execution.
+
+### pipe_open;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    pipe_open; [integer]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Integer expression indicating a implicitPipes index.
+</div>
+
+**Modifies:**
+<div id="mod">
+- implicitPipes: New file descriptors for the read and write ends of a pipe.
+</div>
+
+**Description:**
+Given a value from 0 to 127, creates both ends of one of the 128 implicit pipes from where
+inter-process communication can be done between processes of the same hierarchy. The pipes are
+also inherited from the parent process during fork.
+
+### pipe_read;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    pipe_read; [integer] [primitive]* / [integer] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Integer expression indicating a implicitPipes index.
+- **2nd argument:** Return variable to be overwritten.
+- **3rd argument:** Integer expression indicating number of bytes to be read, mandatory when returning strings.
+</div>
+
+**Description:**
+The current process performs a blocking read of the reading end of a pipe until it recieves the requested bytes
+of information for the variable return, 4 bytes for numeric types and the specified bytes for strings. If the
+write end is closed, it doesn't block and keeps executing. The read end must be open for this operation.
+
+### pipe_write;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    pipe_write; [integer] [primitive]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Integer expression indicating a implicitPipes index.
+- **2nd argument:** Primitive expression to be written in the heap.
+</div>
+
+**Description:**
+The current process writes the contents of a primitive expression to the writing end of a pipe,
+4 bytes for numeric types and the string content for strings. If the read end is closed, SIGPIPE 
+gets sent to the current process. The write end must be open for this operation.
+
+### pipe_close_read;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    pipe_close_read; [integer]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Integer expression indicating a implicitPipes index.
+</div>
+
+**Modifies:**
+<div id="mod">
+- implicitPipes: Invalidates the read end file descriptor of the pipe entry.
+</div>
+
+**Description:**
+Closes the read end of an implicit pipe. All pipe file descriptors are automatically closed at 
+the end of execution.
+
+### pipe_close_write;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    pipe_close_write; [integer]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Integer expression indicating a implicitPipes index.
+</div>
+
+**Modifies:**
+<div id="mod">
+- implicitPipes: Invalidates the write end file descriptor of the pipe entry.
+</div>
+
+**Description:**
+Closes the write end of an implicit pipe. All pipe file descriptors are automatically closed at 
+the end of execution.
 
 ## 6.6 Filesystem Module
 
