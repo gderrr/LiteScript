@@ -749,6 +749,330 @@ exist throughout the entire main process's lifetime or until it finishes executi
 
 ## 6.4 Math Module
 
+**Import statement:**
+<CodeBlockLTS>import math</CodeBlockLTS>
+
+**Internal state attributes:**
+<div id="mod">
+**std::mt19937 mt**
+- **Thread local:** No
+- **Cardinality:** 1
+</div>
+
+**Description:**
+Provides trigonometric functions, degree and radiant conversions and pseudo-random number 
+generation with a Mersenne twister (with its seed initialized to the unix epoch time when the
+module is first imported).
+
+### sin;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    sin; [numeric] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression in radiants.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the sine of the expression.
+
+### cos;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    cos; [numeric] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression in radiants.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the cosine of the expression.
+
+### tan;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    tan; [numeric] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression in radiants.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the tangent of the expression.
+
+### asin;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    asin; [numeric] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression in radiants.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the arcsine of the expression.
+
+### acos;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    acos; [numeric] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression in radiants.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the arcosine of the expression.
+
+### atan;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    atan; [numeric] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression in radiants.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the arctangent of the expression.
+
+### sinh;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    sinh; [numeric] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression in radiants.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the hyperbolic sine of the expression.
+
+### cosh;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    cosh; [numeric] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression in radiants.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the hyperbolic cosine of the expression.
+
+### tanh;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    tanh; [numeric] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression in radiants.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the hyperbolic tangent of the expression.
+
+### asinh;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    asinh; [numeric] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression in radiants.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the hyperbolic arcsine of the expression.
+
+### acosh;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    acosh; [numeric] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression in radiants.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the hyperbolic arcosine of the expression.
+
+### atanh;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    atanh; [numeric] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression in radiants.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the hyperbolic arctangent of the expression.
+
+### deg2rad;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    deg2rad; [numeric] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression in degrees.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the conversion to radiants of the expression.
+
+### rad2deg;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    rad2deg; [numeric] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Numeric expression in radiants.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the conversion to degrees of the expression.
+
+### rand_integer;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    rand_integer; [integer] [integer] [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Integer expression indicating a lower bound.
+- **2nd argument:** Integer expression indicating an upper bound.
+- **3rd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns a random integer in the closed interval defined by the lower and upper bounds following
+a uniform distribution.
+
+### rand_real;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    rand_real; [real] [real] [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Real expression indicating a lower bound.
+- **2nd argument:** Real expression indicating an upper bound.
+- **3rd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns a random real in the closed interval defined by the lower and upper bounds following
+a uniform distribution.
+
+### get_pi;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    get_pi; [real]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the value of pi used implicitly by the interpreter (rounded to 7 decimals of precision).
+
 ## 6.5 Unix Module
 
 ## 6.6 Filesystem Module
