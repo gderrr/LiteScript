@@ -135,8 +135,8 @@ There are special symbols with meanings, if a type is between:
 - (): It is optional.
 
 More special symbols:
-- *: The argument is a mutable reference therefore a variable is to be provided and an expression cannot be used.
-- /: If used when listing arguments, then the arguments on the right are an additional optional extension of arguments.
+- *: The argument is mutated therefore a variable is to be provided and an expression cannot be used.
+- /: If used when listing arguments, then the arguments on the right are an additional optional extension of mandatory arguments.
 - ...: Variadic number of arguments, any number accepted.
 
 **Arguments:**
@@ -1074,6 +1074,178 @@ a uniform distribution.
 Returns the value of pi used implicitly by the interpreter (rounded to 7 decimals of precision).
 
 ## 6.5 Unix Module
+
+**Import statement:**
+<CodeBlockLTS>import unix</CodeBlockLTS>
+
+**Internal state attributes:**
+<div id="mod">
+**Map(String, void\*) memoryChunks**
+- **Thread local:** No
+- **Cardinality:** \*
+</div>
+<div id="mod">
+**Array(Tuple(Integer, Integer)) implicitPipes**
+- **Thread local:** No
+- **Cardinality:** 0..128
+</div>
+
+**Description:**
+Implements wrappers to unix based system calls on the Linux kernel for systems programming; 
+allowing process creation/management, signal sending, low level memory safe heap chunk
+manipulation for fast contiguous memory, pipe creation with up to 128 implicit pipes, along with
+miscellaneous functionalities.
+
+### fork;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    fork; (integer)*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Performs a unix fork of the current process, creating a new cloned child process. Optionally
+returns the return value of the fork, 0 for the child process and the child's pid for the
+parent process (might return a negative value if fork failed).
+
+### exec;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    exec; [string] [string] (string) ... 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Path to the executable to be mutated to.
+- **2nd argument:** Mandatory first argument of exec (usually the executable name).
+- **3rd-Nth argument:** Optional additional arguments for the exec call.
+</div>
+
+**Description:**
+Performs a unix exec of the current process, mutating it to the new executable specified by the path, with the provided 
+arguments. First searches in the running directory and then in the $PATH
+environment variable, for relative paths. If exec fails, the program continues executing 
+the next statement.
+
+### get_pid;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    get_pid; [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the pid of the current process.
+
+### get_ppid;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    get_ppid; [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the pid of the parent process of the current process.
+
+### waitpid;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    waitpid; [integer] (integer)*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Integer expression indicating a child process pid.
+- **2nd argument:** Optional return variable to be overwritten.
+</div>
+
+**Description:**
+Performs a unix pid of the current process, waits for the child process of the indicated pid
+(-1 for any) to finish executing. Optionally returns the exit code of the finished child process.
+Follows the same rules as glibc's waitpid implementation.
+
+### kill;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    kill; [integer] [integer]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Integer expression indicating a target process pid.
+- **2nd argument:** Integer expression indicating the number of a signal to be sent.
+</div>
+
+**Description:**
+Performs a unix kill, sending a signal to the targeted process with the provided pid. The number
+of each signal is indicated in the [signal man page](https://man7.org/linux/man-pages/man7/signal.7.html).
+
+### sleep;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    sleep; [integer]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Integer expression indicating number of milliseconds.
+</div>
+
+**Description:**
+The current process sleeps/idles for at least the indicated number of milliseconds, in accordance
+to the CPU scheduler.
+
+### time;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    time; [integer]* (integer)*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+- **2nd argument:** Optional return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the current unix epoch time truncated to 32 bits. Optional second variable for returning 
+the upper 32 bits of the current unix epoch time.
 
 ## 6.6 Filesystem Module
 
