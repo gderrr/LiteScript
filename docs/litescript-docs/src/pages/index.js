@@ -30,7 +30,7 @@ export default function Home() {
       <HomepageHeader />
       <main>
         <div id="frame">
-          <img id="mainlogo" src="/img/logo.svg"/>
+          <img id="mainlogo" src="/LiteScript/img/logo.svg"/>
         </div>
         <div id="desc">
         <p>
