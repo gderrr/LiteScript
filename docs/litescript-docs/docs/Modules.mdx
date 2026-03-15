@@ -1843,6 +1843,539 @@ dot. If it is a directory, it returns an empty string.
 
 ## 6.7 Network Module
 
+**Import statement:**
+<CodeBlockLTS>import network</CodeBlockLTS>
+
+**Internal state attributes:**
+<div id="mod">
+**Map(String, HttpServer) httpServers**
+- **Thread local:** Yes
+- **Cardinality:** \*
+</div>
+<div id="mod">
+**Map(String, TcpSocket) tcpSockets**
+- **Thread local:** Yes
+- **Cardinality:** \*
+</div>
+
+**Description:**
+Implements the different functionalities that interact with the internet over the network, such
+as: HTTP client requests and server responses, lower level TCP client and server connections, 
+UDP packet sending and recovery, DNS resolutions, as well as other utilities for parsing data like
+base64 and JSON.
+
+### http_listen;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    http_listen; [string] [integer] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to httpServers.
+- **2nd argument:** Integer expression indicating a logical network port.
+</div>
+
+**Modifies:**
+<div id="mod">
+- httpServers: Creates a new entry with the port a server side connection will listen to.
+</div>
+
+**Description:**
+Binds a port to a server side connection that will be specified later on (referenced by the provided
+identifier), doesn't actually listen for incoming requests to that port until http_start; is called.
+If there already was a port binded to the identifier, then it resets the port it will listen to and
+resets all defined routes.
+
+### http_route;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    http_route; [string] [string] [string] [function] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to httpServers.
+- **2nd argument:** HTTP method that will be handled.
+- **3rd argument:** Logical path that will be handled.
+- **4th argument:** Function that handles the request, parameters are ignored.
+</div>
+
+**Modifies:**
+<div id="mod">
+- httpServers: Defines the route of an entry.
+</div>
+
+**Description:**
+Defines a HTTP route/endpoint of a binded port indicated by the identifier that indicates how to handle incoming requests with the provided
+HTTP method and path, and the provided user function will be in charge how handling the request
+and returning the response.
+
+There are only 4 supported HTTP methods: "GET", "POST", "PATCH" and "DELETE". Dynamic paths are not supported (:attribute), only static fixed paths.
+
+The parameters of the handler function will be replaced by one single argument containing all
+the necessary information of the HTTP request, stored in a container at the variable arg0. The
+request container will have the following key-value pairs:
+- "method": the HTTP method of the incoming request as a string.
+- "path": the path of the incoming request as a string.
+- "version": the HTTP version used as a string.
+- "body": the incoming request's content as a string.
+- "headers": any headers of the incoming requests as a container of string key and string value,
+such as "Content-Type".
+- "params": any query parameters provided by the request as a container of string key and string value.
+
+After handling the logic for the request, the handler sends the response with the "return" keyword,
+which supports 2 different return types: If it returns a string, then it returns a simple text/plain with
+the string content in the body and a status code of 200, otherwise it only supports returning containers
+with specific key-value pairs:
+- "status": the status code of the response as an integer.
+- "body": the response content that will be sent as a string.
+- "headers": any headers that the response will contain as a container of string key and string value.
+Content-Type is a mandatory header.
+
+**Examples:**
+Here is an example of how to handle the request containers and how to return the responses:
+
+<CodeBlockLTS>
+```
+func
+    method = ""
+    path = ""
+    version = ""
+    body = ""
+    container headers
+    container params
+
+    arg0 get "method" -> method
+    arg0 get "path" -> path
+    arg0 get "version" -> version
+    arg0 get "body" -> body
+    arg0 get "headers" -> headers
+    arg0 get "params" -> params
+
+    ...
+
+    return "OK response with this string as response"
+
+    ...
+
+    container res
+    res put "status" <- 200
+    res put "body" <- htmlString
+    container hdrs
+    hdrs put "Content-Type" <- "text/html"
+    res put "headers" <- hdrs
+    return res
+```
+</CodeBlockLTS>
+
+### http_start;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    http_start; [string] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to httpServers.
+</div>
+
+**Description:**
+Starts the server by creating a new thread that runs asynchronously for each defined route/endpoint
+of the server side connection provided by the identifier, listening on the binded port for incoming
+requests.
+
+### http_get;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    http_get; [string] [string] [string]* / [container] [container] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Fully Qualified Domain Name (FQDN).
+- **2nd argument:** Path to a specific resource.
+- **3rd argument:** Return variable to be overwritten.
+- **4th argument:** Container with string key-value pairs representing headers.
+- **5th argument:** Container with string key-value pairs representing query parameters.
+</div>
+
+**Description:**
+Does a HTTP get to a resource given a path and domain and returns the body of the response, with
+an optional extension for headers and query parameters.
+
+### http_post;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    http_post; [string] [string] [string] / [container] [container] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Fully Qualified Domain Name (FQDN).
+- **2nd argument:** Path to a specific resource.
+- **3rd argument:** Content to be sent.
+- **4th argument:** Container with string key-value pairs representing headers.
+- **5th argument:** Container with string key-value pairs representing query parameters.
+</div>
+
+**Description:**
+Does a HTTP post to a resource given a path and domain sending a string as the body, with
+an optional extension for headers and query parameters.
+
+### http_patch;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    http_patch; [string] [string] [string] / [container] [container] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Fully Qualified Domain Name (FQDN).
+- **2nd argument:** Path to a specific resource.
+- **3rd argument:** Content to be sent.
+- **4th argument:** Container with string key-value pairs representing headers.
+- **5th argument:** Container with string key-value pairs representing query parameters.
+</div>
+
+**Description:**
+Does a HTTP patch to a resource given a path and domain sending a string as the body, with
+an optional extension for headers and query parameters.
+
+### http_delete;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    http_delete; [string] [string] / [container] [container] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Fully Qualified Domain Name (FQDN).
+- **2nd argument:** Path to a specific resource.
+- **3rd argument:** Content to be sent.
+- **4th argument:** Container with string key-value pairs representing headers.
+- **5th argument:** Container with string key-value pairs representing query parameters.
+</div>
+
+**Description:**
+Does a HTTP delete to a resource given a path and domain, with
+an optional extension for headers and query parameters.
+
+### tcp_listen;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    tcp_listen; [string] [string] [integer]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String socket identifier to tcpSockets.
+- **2nd argument:** IPv4 address of one of this machine's NIC's in string format.
+- **3rd argument:** Integer expression indicating a logical network port.
+</div>
+
+**Modifies:**
+<div id="mod">
+- tcpSockets: Creates a new socket entry.
+</div>
+
+**Description:**
+Creates a TCP connection listening to specific port of one of the machine's IP addresses which 
+can later be referenced with the provided socket identifier. Doesn't block.
+
+### tcp_accept;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    tcp_accept; [string] [string]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String socket identifier to tcpSockets.
+- **2nd argument:** String connection identifier to tcpSockets.
+</div>
+
+**Modifies:**
+<div id="mod">
+- tcpSockets: Creates a new connection entry.
+</div>
+
+**Description:**
+Waits for a client connection on the listening port of the provided socket identifier, once a
+client connects, it creates a connection which can later be referenced with the provided connection
+identifier and starts executing the next statement to handle the TCP connection. Blocks until a
+client connects.
+
+### tcp_connect;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    tcp_connect; [string] [integer] [string]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String connection identifier to tcpSockets.
+- **2nd argument:** IPv4 address of the server in string format.
+- **3rd argument:** Integer expression indicating a logical network port.
+</div>
+
+**Modifies:**
+<div id="mod">
+- tcpSockets: Creates a new connection entry.
+</div>
+
+**Description:**
+Waits to connect to a server on the provided port, once the server acknowledges, it creates a 
+connection which can later be referenced with the provided connection identifier and starts 
+executing the next statement to handle the TCP connection. Blocks until it connects.
+
+### tcp_send;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    tcp_send; [string] [string] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String connection identifier to tcpSockets.
+- **2nd argument:** String expression to be sent.
+</div>
+
+**Description:**
+Sends a string through a TCP connection of the provided identifier. Both client and server can
+send information.
+
+### tcp_recv;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    tcp_recv; [string] [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String connection identifier to tcpSockets.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Waits until it recieves a string through a TCP connection of the provided identifier. Both client and server can
+recieve information. Blocks until it recieves some data.
+
+### tcp_close;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    tcp_close; [string] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String socket or connection identifier.
+</div>
+
+**Modifies:**
+<div id="mod">
+- tcpSockets: Deletes a socket/connection entry.
+</div>
+
+**Description:**
+Given a socket or connection identifier, either stops listening to a port or closes a TCP
+connection respectively.
+
+### udp_send;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    udp_send; [string] [integer] [string] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** IPv4 address of the reciever in string format.
+- **2nd argument:** Integer expression indicating a logical network port.
+- **3rd argument:** String expression to be sent.
+</div>
+
+**Description:**
+Sends a string as a UDP packet to a specified IP address and port.
+
+### udp_recv;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    udp_recv; [string] [integer] [string]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** IPv4 address of the reciever in string format.
+- **2nd argument:** Integer expression indicating a logical network port.
+- **3rd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Checks the OS socket recieve buffer for a UDP packet of the specified IP address and port,
+returning the content if there is one.
+
+### dns_resolve;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    dns_resolve; [string] [string]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Registered domain name (domain name + higher domains) as a string.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Runs a dns resolution of the specified registered domain name and returns the IP address of
+the resolution as a string. Returns an empty string in case of failure.
+
+### local_ip;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    local_ip; [string]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the machine's default outward facing IP address, which may be private. Returns
+"0.0.0.0" in case of failure.
+
+### encode_base64;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    encode_base64; [string] [string]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String expression in ASCII.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the encoded base64 string. Unicode is not guaranteed to work.
+
+### decode_base64;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    decode_base64; [string] [string]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String expression in base64.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the decoded base64 string in ASCII format.
+
+### json_to_container;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    json_to_container; [string] [container]* 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String expression in JSON format.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns a container that holds the parsed JSON string. The container format is pretty intuitive,
+with primitive data types almost being mapped as is, JSON arrays being represented as containers
+with integer keys (starting with 0) and JSON objects being nested containers with string keys, with the following
+exceptions:
+- Boolean values: Are converted to a string.
+- Null values: Are converted to a string.
+
+### container_to_json;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    container_to_json; [container] [json]* (integer)
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Regular container (all containers can be converted to JSON).
+- **2nd argument:** Return variable to be overwritten.
+- **3rd argument:** Optional integer expression indicating spaces of intentation.
+</div>
+
+**Description:**
+Returns a JSON string that holds the parsed container, following the format specified in
+json_to_container;. String values "true", "false" and "null" are automatically converted
+to their respective JSON values, by eliminating their quotes.
+
 ## 6.8 GUI Module
 
 ## 6.9 Database Module

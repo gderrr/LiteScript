@@ -1911,7 +1911,7 @@ bool Network::execute (const string& function, vector<any>& args) {
                         // Otherwise, only accept LTS containers with a valid response structure
                         else {
                             /* returnContainer:
-                            *    "result" = INTEGER
+                            *    "status" = INTEGER
                             *    "body" = STRING
                             *    "headers":
                             *      "HEADER1" = STRING
