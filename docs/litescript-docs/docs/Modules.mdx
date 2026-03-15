@@ -2218,7 +2218,8 @@ recieve information. Blocks until it recieves some data.
 
 **Description:**
 Given a socket or connection identifier, either stops listening to a port or closes a TCP
-connection respectively.
+connection respectively. Sockets and connections are automatically closed during the end of
+execution.
 
 ### udp_send;
 
@@ -2377,5 +2378,572 @@ json_to_container;. String values "true", "false" and "null" are automatically c
 to their respective JSON values, by eliminating their quotes.
 
 ## 6.8 GUI Module
+
+**Import statement:**
+<CodeBlockLTS>import gui</CodeBlockLTS>
+
+**Internal state attributes:**
+<div id="mod">
+**Map(String, Window) windows**
+- **Thread local:** No
+- **Cardinality:** \*
+</div>
+
+**Description:**
+Allows creating very simple windows and forms to display and input infomation in a user
+interface, with the coordination of GLFW, OpenGL, GLAD and the main framework of ImGui;
+with the limitation of fixed unresizeable windows and absolute coordinate position instead of
+using layouts to simplify programming.
+
+### make_window;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    make_window; [string] [integer] [integer] [integer] [integer] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows, which is also the window title.
+- **2nd argument:** Horizontal position of the window on the screen in pixels.
+- **3rd argument:** Vertical position of the window on the screen in pixels.
+- **4th argument:** Width of the window on the screen in pixels.
+- **5th argument:** Height of the window on the screen in pixels.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Creates a new entry with a logical window.
+</div>
+
+**Description:**
+Creates a logical window (which won't be displayed yet) that can contain different widgets for
+displaying and accepting user input, given a position on the screen and its width and height;
+which can later be referenced with the provided identifier.
+
+### add_button;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    add_button; [string] [string] [integer] [integer] [integer] [integer] [function] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Horizontal position of the widget with respect to the window in pixels.
+- **4th argument:** Vertical position of the widget with respect to the window in pixels.
+- **5th argument:** Width of the widget in pixels.
+- **6th argument:** Height of the widget in pixels.
+- **7th argument:** Callback function to be executed on clicking.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Adds a new widget to the specified window entry.
+</div>
+
+**Description:**
+Adds a button to a window given an id (which is also text), position, width, height and callback function that
+executes logic when clicking and that can read and write values of different widgets.
+
+### add_label;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    add_label; [string] [string] [integer] [integer] [integer] (string)
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Horizontal position of the widget with respect to the window in pixels.
+- **4th argument:** Vertical position of the widget with respect to the window in pixels.
+- **5th argument:** Font size of the text.
+- **6th argument:** Optional placeholder text.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Adds a new widget to the specified window entry.
+</div>
+
+**Description:**
+Adds a label to a window given an id, position, font size and placeholder text (if not provided
+it will be empty by default).
+
+### add_textfield;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    add_textfield; [string] [string] [integer] [integer] [integer] [integer] (string)
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Horizontal position of the widget with respect to the window in pixels.
+- **4th argument:** Vertical position of the widget with respect to the window in pixels.
+- **5th argument:** Width of the widget in pixels.
+- **6th argument:** Height of the widget in pixels.
+- **7th argument:** Optional placeholder text.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Adds a new widget to the specified window entry.
+</div>
+
+**Description:**
+Adds a multiline textfield to a window given an id, position, width, height and placeholder text
+(if not provided then it will be "Enter text..." by default).
+
+### add_checkbox;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    add_checkbox; [string] [string] [integer] [integer] [integer] [integer] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Horizontal position of the widget with respect to the window in pixels.
+- **4th argument:** Vertical position of the widget with respect to the window in pixels.
+- **5th argument:** Width of the widget in pixels.
+- **6th argument:** Height of the widget in pixels.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Adds a new widget to the specified window entry.
+</div>
+
+**Description:**
+Adds a checkbox to a window given an id, position, width and height. It will be unchecked by
+default.
+
+### add_slider;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    add_slider; [string] [string] [integer] [integer] [integer] [integer] [integer] (integer)
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Horizontal position of the widget with respect to the window in pixels.
+- **4th argument:** Vertical position of the widget with respect to the window in pixels.
+- **5th argument:** Width of the widget in pixels.
+- **6th argument:** Minimum value of the slider.
+- **7th argument:** Maximum value of the slider.
+- **8th argument:** Optional default value of the slider.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Adds a new widget to the specified window entry.
+</div>
+
+**Description:**
+Adds a slider to a window given an id, position, width, minimum and maximum value, with an optional
+default value (if not provided then it will be set to the minimum by default).
+
+### add_progress_bar;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    add_progress_bar; [string] [string] [integer] [integer] [integer] [integer] (real)
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Horizontal position of the widget with respect to the window in pixels.
+- **4th argument:** Vertical position of the widget with respect to the window in pixels.
+- **5th argument:** Width of the widget in pixels.
+- **6th argument:** Height of the widget in pixels.
+- **7th argument:** Optional default value of the slider in unit fraction [0,1].
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Adds a new widget to the specified window entry.
+</div>
+
+**Description:**
+Adds a progress bar to a window given an id, position, width and height, with an optional default
+value (if not provided then it will be 0.0 by default).
+
+### add_dropdown;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    add_dropdown; [string] [string] [integer] [integer] [integer] [container] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Horizontal position of the widget with respect to the window in pixels.
+- **4th argument:** Vertical position of the widget with respect to the window in pixels.
+- **5th argument:** Width of the widget in pixels.
+- **6th argument:** Container with all the options as strings.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Adds a new widget to the specified window entry.
+</div>
+
+**Description:**
+Adds a dropdown to a window given an id, position, width and container where all the options
+are string values in each key-value pair (the key will be ignored).
+
+### add_window;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    add_window; [string]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Modifies the visibility of a specified window entry.
+</div>
+
+**Description:**
+Given a window identified by the provided string, puts the window in the gui loop to be rendered
+later.
+
+### close_window;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    close_window; [string]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Modifies the visibility of a specified window entry.
+</div>
+
+**Description:**
+Given a window identified by the provided string, closes the window during rendering of the gui
+loop.
+
+### visible_window;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    visible_window; [string] [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns a boolean value that indicates if a window identified by the string is running or not.
+
+### set_label;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    set_label; [string] [string] [string]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Value to be set to.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Modifies the contents of a widget of the specified window entry.
+</div>
+
+**Description:**
+Sets the text of a label to a new value.
+
+### get_textfield;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    get_textfield; [string] [string] [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the inputted text of the textfield.
+
+### set_textfield;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    set_textfield; [string] [string] [string]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Value to be set to.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Modifies the contents of a widget of the specified window entry.
+</div>
+
+**Description:**
+Clears the old text and sets the text of a textfield with the new text.
+
+### get_checkbox;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    get_checkbox; [string] [string] [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the boolean value of the checkbox indicating if it is checked or not.
+
+### set_checkbox;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    set_checkbox; [string] [string]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Modifies the contents of a widget of the specified window entry.
+</div>
+
+**Description:**
+Checks the checkbox if it was unchecked.
+
+### clear_checkbox;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    clear_checkbox; [string] [string]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Modifies the contents of a widget of the specified window entry.
+</div>
+
+**Description:**
+Unchecks the checkbox if it was checked.
+
+### toggle_checkbox;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    toggle_checkbox; [string] [string]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Modifies the contents of a widget of the specified window entry.
+</div>
+
+**Description:**
+Checks the checkbox if it was unchecked and unchecks the checkbox if it was checked.
+
+### get_slider;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    get_slider; [string] [string] [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the value of the slider.
+
+### set_slider;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    set_slider; [string] [string] [integer]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Value to be set to.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Modifies the contents of a widget of the specified window entry.
+</div>
+
+**Description:**
+Sets the value of a slider, must be in between the minimum and maximum.
+
+### get_dropdown;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    get_dropdown; [string] [string] [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the selected option of the dropdown.
+
+### set_dropdown;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    set_dropdown; [string] [string] [string]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** String identifier to windows.
+- **2nd argument:** String identifier to windows' widgets.
+- **3rd argument:** Value to be set to.
+</div>
+
+**Modifies:**
+<div id="mod">
+- windows: Modifies the contents of a widget of the specified window entry.
+</div>
+
+**Description:**
+Sets the selected option with the provided string, if it is not in any of the options, then
+it simply clears the selection.
+
+### render_gui;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    render_gui;
+```
+</CodeBlockLTS>
+
+**Description:**
+Renders the gui loop, all logical windows added to the gui loop now are visible to the screen.
+Windows may be closed but not added when the gui loop is rendered because it is very volatile.
+During rendering, the callbacks of the buttons now can read and modify the widgets' values with
+the previously mentioned functions. Blocks until all windows are closed, in that case it continues
+executing the next statement.
 
 ## 6.9 Database Module
