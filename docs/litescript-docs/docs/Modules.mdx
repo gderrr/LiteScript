@@ -2947,3 +2947,235 @@ the previously mentioned functions. Blocks until all windows are closed, in that
 executing the next statement.
 
 ## 6.9 Database Module
+
+**Import statement:**
+<CodeBlockLTS>import database</CodeBlockLTS>
+
+**Internal state attributes:**
+<div id="mod">
+**DBWrapper backend**
+- **Thread local:** Yes 
+- **Cardinality:** 0..1
+</div>
+<div id="mod">
+**Integer inTxn**
+- **Thread local:** Yes 
+- **Cardinality:** 1
+</div>
+
+**Description:**
+Implements connections with relational SQL databases for storing and retrieving persistent
+data, using SQLite3 and PostgreSQL. This module is designed to be super rigid, allowing only
+one database connection per thread, explicit errors and transaction only interaction to guarantee safety. If any exception occurs during execution that is not 
+caused by the database, will result in an immediate panic exit as the default behavior.
+
+### open_database;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    open_database; [string] / [string] [string] [string] 
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Filepath to .db file for SQLite, URL for PostgreSQL.
+- **2nd argument:** Username for PostgreSQL.
+- **3rd argument:** Password for PostgreSQL.
+- **4th argument:** Database name for PostgreSQL.
+</div>
+
+**Modifies:**
+<div id="mod">
+- backend: Starts a database connection.
+</div>
+
+**Description:**
+Given the specified parameters, starts a connection either with a local SQLite database file, or
+a remote PostgreSQL database server.
+
+### in_database;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    in_database; [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns a boolean value that indicates if there is an open database connection or not.
+
+### close_database;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    close_database;
+```
+</CodeBlockLTS>
+
+**Modifies:**
+<div id="mod">
+- backend: Ends the database connection.
+- inTxn: Set to false.
+</div>
+
+**Description:**
+Closes the database connection, automatically aborts/rollsback any pending transaction.
+
+### begin_transaction;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    begin_transaction;
+```
+</CodeBlockLTS>
+
+**Modifies:**
+<div id="mod">
+- inTxn: Set to true.
+</div>
+
+**Description:**
+Begins a database transaction so that SQL can be executed and any changes be confirmed with either
+commits or rollbacks. If there is a pending transaction, it automatically rollsback the pending
+transaction and throws an error.
+
+### in_transaction;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    in_transaction; [integer]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns a boolean value that indicates if there is a pending transaction connection or not.
+
+### commit_transaction;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    commit_transaction;
+```
+</CodeBlockLTS>
+
+**Modifies:**
+<div id="mod">
+- inTxn: Set to false.
+</div>
+
+**Description:**
+Commits the transaction, ending it. Any changes made to the database are confirmed and executed.
+
+### rollback_transaction;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    rollback_transaction;
+```
+</CodeBlockLTS>
+
+**Modifies:**
+<div id="mod">
+- inTxn: Set to false.
+</div>
+
+**Description:**
+Rollsback the transaction, ending it. Any changes made to the database are ignored and discarded.
+
+### prepare_statement;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    prepare_statement; [string]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** SQL prepared statement (beware of binding syntax).
+</div>
+
+**Modifies:**
+<div id="mod">
+- backend: Creates a new prepared statement, only one maximum.
+</div>
+
+**Description:**
+Creates a prepared statement with bindable arguments to prevent SQL injection. For SQLite there
+are an unlimited number of parameters but for PostgreSQL there is a maximum limit of 6. Remember
+that for SQLite to indicate a parameter it is with "?" and in PostgreSQL it is with "$n", where
+n is &lt;= 6 and denotes a contiguous discrete set of natural numbers.
+
+### bind_statement;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    bind_statement; [integer] [primitive]
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Binding parameter argument, starting at 1.
+- **2nd argument:** Data to be binded to, SQL types are automatically mapped.
+</div>
+
+**Description:**
+Binds a value to a parameter defined in an active prepared statement. The index must be in
+the interval of the number of bindable parameters.
+
+### execute_statement;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    execute_statement; (container)*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the previously prepared statement written in SQL, with an optional container to retrieve
+values from a query and/or for more information.
+
+### get_last_database_error;
+
+**Function call:**
+<CodeBlockLTS>
+```
+    get_last_database_error; [string]*
+```
+</CodeBlockLTS>
+
+**Arguments:**
+<div id="mod">
+- **1st argument:** Return variable to be overwritten.
+</div>
+
+**Description:**
+Returns the last error that occured in the database, which might result from an incorrect SQL
+statement, an internal database error, etc.
