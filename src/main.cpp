@@ -184,9 +184,6 @@ vector<TLine> parse (int startln, const vector<string>& readFile) {
         int tabs = 0;
         vector<string> tokens = split(tabs, readFile[i]);
 
-        //for (string t: tokens) cout << t << " ";
-        //cout << tokens.size() << endl;
-
         if (tokens[0] == "import") {
             for (int j = 1; j < tokens.size(); j++) {
                 // We don't create duplicated imports with this implementation
@@ -654,7 +651,7 @@ int main (int argc, char* argv[]) {
     }
 
     if (string(argv[1]) == "--version") {
-        cout << "lite 0.9.1 2026-2-22" << endl;
+        cout << "lite 1.0.0 2026-3-15" << endl;
         return 0;
     }
 
