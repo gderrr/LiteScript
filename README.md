@@ -3,18 +3,15 @@
 A simple procedural toy scripting language implemented in C++ designed to run simple scripts,
 expanded with different functionalities to make the interpreter useful, with a unique programming philosophy.
 
-<div style="border:1px solid red; padding:10px; background-color:#ffe6e6;">
 <strong>⚠️ DISCLAIMER:</strong>
-<p>
+
 I’m not an experienced C++ developer, what started off as a silly side project grew into an
 actually useful language with a lot of functionalities, so evidently excuse me for breaking
 best practices and the low code quality.
-</p><p>
+
 Regardless, this language is mainly designed to run simple scripts regarding some topics that
 are not trivial to implement in other languages like HTTP and database connections. It was
 **NOT** designed to run real server side applications, so if you intend to do it use it at your own risk!
-</p>
-</div>
 
 ## Documentation
 
